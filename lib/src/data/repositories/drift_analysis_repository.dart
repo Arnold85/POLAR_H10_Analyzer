@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import '../../domain/models/analysis_result.dart';
 import '../../domain/repositories/analysis_repository.dart';
-import '../datasources/local/app_database.dart';
+import '../datasources/local/app_database.dart' as db;
 import '../models/data_mappers.dart';
 
 /// Concrete implementation of AnalysisRepository using Drift database
 class DriftAnalysisRepository implements AnalysisRepository {
-  final AppDatabase _database;
+  final db.AppDatabase _database;
 
   const DriftAnalysisRepository(this._database);
 
@@ -70,7 +70,7 @@ class DriftAnalysisRepository implements AnalysisRepository {
   }) async {
     await (_database.update(_database.analysisResults)
           ..where((result) => result.analysisId.equals(analysisId)))
-        .write(AnalysisResultsCompanion(
+        .write(db.AnalysisResultsCompanion(
       status: Value(status.name),
       errorMessage: Value(errorMessage),
       updatedAt: Value(DateTime.now()),
@@ -86,7 +86,7 @@ class DriftAnalysisRepository implements AnalysisRepository {
   }) async {
     await (_database.update(_database.analysisResults)
           ..where((result) => result.analysisId.equals(analysisId)))
-        .write(AnalysisResultsCompanion(
+        .write(db.AnalysisResultsCompanion(
       data: Value(jsonEncode(data.toJson())),
       confidence: Value(confidence),
       processingTimeMs: Value(processingTimeMs),
@@ -176,26 +176,4 @@ class DriftAnalysisRepository implements AnalysisRepository {
   }
 }
 
-/// Extension to convert database entity to domain model for analysis results
-extension AnalysisResultEntityToDomain on AnalysisResultData {
-  AnalysisResult toDomainModel() {
-    return AnalysisResult(
-      analysisId: analysisId,
-      sessionId: sessionId,
-      analysisType: AnalysisType.values.firstWhere(
-        (t) => t.name == analysisType,
-        orElse: () => AnalysisType.statistical,
-      ),
-      analysisTimestamp: analysisTimestamp,
-      algorithmVersion: algorithmVersion,
-      status: AnalysisStatus.values.firstWhere(
-        (s) => s.name == status,
-        orElse: () => AnalysisStatus.pending,
-      ),
-      data: AnalysisData.fromJson(jsonDecode(data)),
-      confidence: confidence,
-      errorMessage: errorMessage,
-      processingTimeMs: processingTimeMs,
-    );
-  }
-}
+// Note: mapping extension moved to `data_mappers.dart` to avoid ambiguous imports and centralize mappings.

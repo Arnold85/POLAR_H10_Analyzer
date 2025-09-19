@@ -1,12 +1,12 @@
 import 'package:drift/drift.dart';
 import '../../domain/models/polar_device.dart';
 import '../../domain/repositories/device_repository.dart';
-import '../datasources/local/app_database.dart';
+import '../datasources/local/app_database.dart' as db;
 import '../models/data_mappers.dart';
 
 /// Concrete implementation of DeviceRepository using Drift database
 class DriftDeviceRepository implements DeviceRepository {
-  final AppDatabase _database;
+  final db.AppDatabase _database;
 
   const DriftDeviceRepository(this._database);
 
@@ -46,7 +46,7 @@ class DriftDeviceRepository implements DeviceRepository {
   ) async {
     await (_database.update(_database.polarDevices)
           ..where((device) => device.deviceId.equals(deviceId)))
-        .write(PolarDevicesCompanion(
+        .write(db.PolarDevicesCompanion(
       connectionStatus: Value(status.name),
       lastSeen: Value(DateTime.now()),
       updatedAt: Value(DateTime.now()),
@@ -57,7 +57,7 @@ class DriftDeviceRepository implements DeviceRepository {
   Future<void> updateSignalQuality(String deviceId, int quality) async {
     await (_database.update(_database.polarDevices)
           ..where((device) => device.deviceId.equals(deviceId)))
-        .write(PolarDevicesCompanion(
+        .write(db.PolarDevicesCompanion(
       signalQuality: Value(quality),
       updatedAt: Value(DateTime.now()),
     ));
@@ -70,31 +70,11 @@ class DriftDeviceRepository implements DeviceRepository {
   ) async {
     await (_database.update(_database.polarDevices)
           ..where((device) => device.deviceId.equals(deviceId)))
-        .write(PolarDevicesCompanion(
+        .write(db.PolarDevicesCompanion(
       electrodeStatus: Value(status.name),
       updatedAt: Value(DateTime.now()),
     ));
   }
 }
 
-/// Extension to convert database entity to domain model
-extension PolarDeviceEntityToDomain on PolarDevice {
-  PolarDevice toDomainModel() {
-    return PolarDevice(
-      deviceId: deviceId,
-      name: name,
-      firmwareVersion: firmwareVersion,
-      batteryLevel: batteryLevel,
-      connectionStatus: DeviceConnectionStatus.values.firstWhere(
-        (status) => status.name == connectionStatus,
-        orElse: () => DeviceConnectionStatus.disconnected,
-      ),
-      signalQuality: signalQuality,
-      electrodeStatus: ElectrodeStatus.values.firstWhere(
-        (status) => status.name == electrodeStatus,
-        orElse: () => ElectrodeStatus.unknown,
-      ),
-      lastSeen: lastSeen,
-    );
-  }
-}
+// Mapping extension for `db.PolarDevice` moved to `data_mappers.dart`.

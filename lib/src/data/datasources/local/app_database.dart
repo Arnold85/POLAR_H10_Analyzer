@@ -107,11 +107,11 @@ class AppDatabase extends _$AppDatabase {
       final cutoffDate = now.subtract(sessionRetention);
       
       // Delete old completed sessions and their data
-      final oldSessions = await (select(measurementSessions)
-            ..where((s) => s.endTime.isNotNull() & 
-                          s.endTime.isLessThan(cutoffDate) &
-                          s.status.equals('completed')))
-          .get();
+  final oldSessions = await (select(measurementSessions)
+    ..where((s) => s.endTime.isNotNull() & 
+          s.endTime.isSmallerThanValue(cutoffDate) &
+          s.status.equals('completed')))
+      .get();
       
       for (final session in oldSessions) {
         await _deleteSessionData(session.sessionId);
@@ -198,7 +198,7 @@ class DatabaseStats {
   });
 
   double get totalSampleCount => 
-      ecgSampleCount + hrSampleCount + hrvSampleCount;
+      (ecgSampleCount + hrSampleCount + hrvSampleCount).toDouble();
 
   @override
   String toString() {

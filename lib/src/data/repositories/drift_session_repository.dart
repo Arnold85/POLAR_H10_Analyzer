@@ -1,13 +1,12 @@
-import 'dart:convert';
 import 'package:drift/drift.dart';
 import '../../domain/models/measurement_session.dart';
 import '../../domain/repositories/session_repository.dart';
-import '../datasources/local/app_database.dart';
+import '../datasources/local/app_database.dart' as db;
 import '../models/data_mappers.dart';
 
 /// Concrete implementation of SessionRepository using Drift database
 class DriftSessionRepository implements SessionRepository {
-  final AppDatabase _database;
+  final db.AppDatabase _database;
 
   const DriftSessionRepository(this._database);
 
@@ -82,15 +81,15 @@ class DriftSessionRepository implements SessionRepository {
   @override
   Future<void> updateSession(MeasurementSession session) async {
     await (_database.update(_database.measurementSessions)
-          ..where((s) => s.sessionId.equals(session.sessionId)))
-        .write(session.toUpdateCompanion());
+      ..where((s) => s.sessionId.equals(session.sessionId)))
+    .write(session.toUpdateCompanion());
   }
 
   @override
   Future<void> deleteSession(String sessionId) async {
     await _database.transaction(() async {
       // Delete all related data first
-      await (_database.delete(_database.ecgSamples)
+  await (_database.delete(_database.ecgSamples)
             ..where((sample) => sample.sessionId.equals(sessionId)))
           .go();
       
@@ -115,9 +114,9 @@ class DriftSessionRepository implements SessionRepository {
           .go();
 
       // Finally delete the session
-      await (_database.delete(_database.measurementSessions)
-            ..where((session) => session.sessionId.equals(sessionId)))
-          .go();
+  await (_database.delete(_database.measurementSessions)
+    ..where((session) => session.sessionId.equals(sessionId)))
+      .go();
     });
   }
 
@@ -174,26 +173,4 @@ class DriftSessionRepository implements SessionRepository {
   }
 }
 
-/// Extension to convert database entity to domain model for sessions
-extension MeasurementSessionEntityToDomain on MeasurementSessionData {
-  MeasurementSession toDomainModel() {
-    return MeasurementSession(
-      sessionId: sessionId,
-      deviceId: deviceId,
-      startTime: startTime,
-      endTime: endTime,
-      status: SessionStatus.values.firstWhere(
-        (s) => s.name == status,
-        orElse: () => SessionStatus.preparing,
-      ),
-      type: SessionType.values.firstWhere(
-        (t) => t.name == type,
-        orElse: () => SessionType.general,
-      ),
-      tags: tags != null && tags!.isNotEmpty 
-          ? List<String>.from(jsonDecode(tags!)) 
-          : [],
-      notes: notes,
-    );
-  }
-}
+// Mapping extension for `db.MeasurementSession` moved to `data_mappers.dart`.
