@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  const AppTheme._();
-
-  static const _seedColor = Color(0xFF146C94);
-
   static ThemeData get light => ThemeData(
-    colorScheme: ColorScheme.fromSeed(seedColor: _seedColor),
-    useMaterial3: true,
-    appBarTheme: const AppBarTheme(centerTitle: false),
-    cardTheme: const CardThemeData(margin: EdgeInsets.zero),
-  );
+        brightness: Brightness.light,
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          brightness: Brightness.light,
+          seedColor: const Color(0xFF0066FF),
+        ),
+        cardTheme: const CardTheme(margin: EdgeInsets.zero),
+      );
 
   static ThemeData get dark => ThemeData(
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: _seedColor,
-      brightness: Brightness.dark,
-    ),
-    useMaterial3: true,
-    appBarTheme: const AppBarTheme(centerTitle: false),
-    cardTheme: const CardThemeData(margin: EdgeInsets.zero),
-  );
+        brightness: Brightness.dark,
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          brightness: Brightness.dark,
+          seedColor: const Color(0xFF0066FF),
+        ),
+        cardTheme: const CardTheme(margin: EdgeInsets.zero),
+      );
+
 }
