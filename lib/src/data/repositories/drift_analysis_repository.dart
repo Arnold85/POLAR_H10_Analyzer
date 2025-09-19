@@ -13,9 +13,9 @@ class DriftAnalysisRepository implements AnalysisRepository {
 
   @override
   Future<void> saveAnalysisResult(AnalysisResult result) async {
-    await _database.into(_database.analysisResults).insertOnConflictUpdate(
-      result.toCompanion(),
-    );
+    await _database
+        .into(_database.analysisResults)
+        .insertOnConflictUpdate(result.toCompanion());
   }
 
   @override
@@ -38,13 +38,15 @@ class DriftAnalysisRepository implements AnalysisRepository {
     }
 
     if (startDate != null) {
-      query.where((result) => 
-          result.analysisTimestamp.isBiggerOrEqualValue(startDate));
+      query.where(
+        (result) => result.analysisTimestamp.isBiggerOrEqualValue(startDate),
+      );
     }
 
     if (endDate != null) {
-      query.where((result) => 
-          result.analysisTimestamp.isSmallerOrEqualValue(endDate));
+      query.where(
+        (result) => result.analysisTimestamp.isSmallerOrEqualValue(endDate),
+      );
     }
 
     query.orderBy([(result) => OrderingTerm.desc(result.analysisTimestamp)]);
@@ -55,9 +57,10 @@ class DriftAnalysisRepository implements AnalysisRepository {
 
   @override
   Future<AnalysisResult?> getAnalysisResult(String analysisId) async {
-    final entity = await (_database.select(_database.analysisResults)
-          ..where((result) => result.analysisId.equals(analysisId)))
-        .getSingleOrNull();
+    final entity =
+        await (_database.select(_database.analysisResults)
+              ..where((result) => result.analysisId.equals(analysisId)))
+            .getSingleOrNull();
 
     return entity?.toDomainModel();
   }
@@ -68,13 +71,15 @@ class DriftAnalysisRepository implements AnalysisRepository {
     AnalysisStatus status, {
     String? errorMessage,
   }) async {
-    await (_database.update(_database.analysisResults)
-          ..where((result) => result.analysisId.equals(analysisId)))
-        .write(db.AnalysisResultsCompanion(
-      status: Value(status.name),
-      errorMessage: Value(errorMessage),
-      updatedAt: Value(DateTime.now()),
-    ));
+    await (_database.update(
+      _database.analysisResults,
+    )..where((result) => result.analysisId.equals(analysisId))).write(
+      db.AnalysisResultsCompanion(
+        status: Value(status.name),
+        errorMessage: Value(errorMessage),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   @override
@@ -84,29 +89,31 @@ class DriftAnalysisRepository implements AnalysisRepository {
     int? confidence,
     int? processingTimeMs,
   }) async {
-    await (_database.update(_database.analysisResults)
-          ..where((result) => result.analysisId.equals(analysisId)))
-        .write(db.AnalysisResultsCompanion(
-      data: Value(jsonEncode(data.toJson())),
-      confidence: Value(confidence),
-      processingTimeMs: Value(processingTimeMs),
-      status: Value(AnalysisStatus.completed.name),
-      updatedAt: Value(DateTime.now()),
-    ));
+    await (_database.update(
+      _database.analysisResults,
+    )..where((result) => result.analysisId.equals(analysisId))).write(
+      db.AnalysisResultsCompanion(
+        data: Value(jsonEncode(data.toJson())),
+        confidence: Value(confidence),
+        processingTimeMs: Value(processingTimeMs),
+        status: Value(AnalysisStatus.completed.name),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   @override
   Future<void> deleteAnalysisResult(String analysisId) async {
-    await (_database.delete(_database.analysisResults)
-          ..where((result) => result.analysisId.equals(analysisId)))
-        .go();
+    await (_database.delete(
+      _database.analysisResults,
+    )..where((result) => result.analysisId.equals(analysisId))).go();
   }
 
   @override
   Future<void> deleteSessionAnalysis(String sessionId) async {
-    await (_database.delete(_database.analysisResults)
-          ..where((result) => result.sessionId.equals(sessionId)))
-        .go();
+    await (_database.delete(
+      _database.analysisResults,
+    )..where((result) => result.sessionId.equals(sessionId))).go();
   }
 
   @override
@@ -114,22 +121,27 @@ class DriftAnalysisRepository implements AnalysisRepository {
     String sessionId,
     AnalysisType type,
   ) async {
-    final entity = await (_database.select(_database.analysisResults)
-          ..where((result) => 
-              result.sessionId.equals(sessionId) &
-              result.analysisType.equals(type.name))
-          ..orderBy([(result) => OrderingTerm.desc(result.analysisTimestamp)])
-          ..limit(1))
-        .getSingleOrNull();
+    final entity =
+        await (_database.select(_database.analysisResults)
+              ..where(
+                (result) =>
+                    result.sessionId.equals(sessionId) &
+                    result.analysisType.equals(type.name),
+              )
+              ..orderBy([
+                (result) => OrderingTerm.desc(result.analysisTimestamp),
+              ])
+              ..limit(1))
+            .getSingleOrNull();
 
     return entity?.toDomainModel();
   }
 
   @override
   Future<AnalysisSummary> getAnalysisSummary(String sessionId) async {
-    final allAnalyses = await (_database.select(_database.analysisResults)
-          ..where((result) => result.sessionId.equals(sessionId)))
-        .get();
+    final allAnalyses = await (_database.select(
+      _database.analysisResults,
+    )..where((result) => result.sessionId.equals(sessionId))).get();
 
     final totalAnalyses = allAnalyses.length;
     final completedAnalyses = allAnalyses
@@ -150,18 +162,22 @@ class DriftAnalysisRepository implements AnalysisRepository {
 
     final lastAnalysisTime = allAnalyses.isNotEmpty
         ? allAnalyses
-            .map((a) => a.analysisTimestamp)
-            .reduce((a, b) => a.isAfter(b) ? a : b)
+              .map((a) => a.analysisTimestamp)
+              .reduce((a, b) => a.isAfter(b) ? a : b)
         : null;
 
     final completedWithConfidence = allAnalyses
-        .where((a) => a.status == AnalysisStatus.completed.name && a.confidence != null)
+        .where(
+          (a) =>
+              a.status == AnalysisStatus.completed.name && a.confidence != null,
+        )
         .toList();
-    
+
     final averageConfidence = completedWithConfidence.isNotEmpty
         ? completedWithConfidence
-            .map((a) => a.confidence!)
-            .reduce((a, b) => a + b) / completedWithConfidence.length
+                  .map((a) => a.confidence!)
+                  .reduce((a, b) => a + b) /
+              completedWithConfidence.length
         : null;
 
     return AnalysisSummary(

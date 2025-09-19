@@ -18,25 +18,25 @@ class DriftDeviceRepository implements DeviceRepository {
 
   @override
   Future<PolarDevice?> getDevice(String deviceId) async {
-    final entity = await (_database.select(_database.polarDevices)
-          ..where((device) => device.deviceId.equals(deviceId)))
-        .getSingleOrNull();
-    
+    final entity = await (_database.select(
+      _database.polarDevices,
+    )..where((device) => device.deviceId.equals(deviceId))).getSingleOrNull();
+
     return entity?.toDomainModel();
   }
 
   @override
   Future<void> saveDevice(PolarDevice device) async {
-    await _database.into(_database.polarDevices).insertOnConflictUpdate(
-      device.toCompanion(),
-    );
+    await _database
+        .into(_database.polarDevices)
+        .insertOnConflictUpdate(device.toCompanion());
   }
 
   @override
   Future<void> deleteDevice(String deviceId) async {
-    await (_database.delete(_database.polarDevices)
-          ..where((device) => device.deviceId.equals(deviceId)))
-        .go();
+    await (_database.delete(
+      _database.polarDevices,
+    )..where((device) => device.deviceId.equals(deviceId))).go();
   }
 
   @override
@@ -44,23 +44,27 @@ class DriftDeviceRepository implements DeviceRepository {
     String deviceId,
     DeviceConnectionStatus status,
   ) async {
-    await (_database.update(_database.polarDevices)
-          ..where((device) => device.deviceId.equals(deviceId)))
-        .write(db.PolarDevicesCompanion(
-      connectionStatus: Value(status.name),
-      lastSeen: Value(DateTime.now()),
-      updatedAt: Value(DateTime.now()),
-    ));
+    await (_database.update(
+      _database.polarDevices,
+    )..where((device) => device.deviceId.equals(deviceId))).write(
+      db.PolarDevicesCompanion(
+        connectionStatus: Value(status.name),
+        lastSeen: Value(DateTime.now()),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   @override
   Future<void> updateSignalQuality(String deviceId, int quality) async {
-    await (_database.update(_database.polarDevices)
-          ..where((device) => device.deviceId.equals(deviceId)))
-        .write(db.PolarDevicesCompanion(
-      signalQuality: Value(quality),
-      updatedAt: Value(DateTime.now()),
-    ));
+    await (_database.update(
+      _database.polarDevices,
+    )..where((device) => device.deviceId.equals(deviceId))).write(
+      db.PolarDevicesCompanion(
+        signalQuality: Value(quality),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   @override
@@ -68,12 +72,14 @@ class DriftDeviceRepository implements DeviceRepository {
     String deviceId,
     ElectrodeStatus status,
   ) async {
-    await (_database.update(_database.polarDevices)
-          ..where((device) => device.deviceId.equals(deviceId)))
-        .write(db.PolarDevicesCompanion(
-      electrodeStatus: Value(status.name),
-      updatedAt: Value(DateTime.now()),
-    ));
+    await (_database.update(
+      _database.polarDevices,
+    )..where((device) => device.deviceId.equals(deviceId))).write(
+      db.PolarDevicesCompanion(
+        electrodeStatus: Value(status.name),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 }
 

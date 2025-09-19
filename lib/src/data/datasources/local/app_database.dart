@@ -9,16 +9,18 @@ import 'database_tables.dart';
 part 'app_database.g.dart';
 
 /// Main application database using Drift
-@DriftDatabase(tables: [
-  PolarDevices,
-  MeasurementSessions,
-  EcgSamples,
-  EcgSampleBatches,
-  HeartRateSamples,
-  HrvSamples,
-  AnalysisResults,
-  ExportHistory,
-])
+@DriftDatabase(
+  tables: [
+    PolarDevices,
+    MeasurementSessions,
+    EcgSamples,
+    EcgSampleBatches,
+    HeartRateSamples,
+    HrvSamples,
+    AnalysisResults,
+    ExportHistory,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -102,25 +104,28 @@ class AppDatabase extends _$AppDatabase {
     Duration? sampleRetention,
   }) async {
     final now = DateTime.now();
-    
+
     if (sessionRetention != null) {
       final cutoffDate = now.subtract(sessionRetention);
-      
+
       // Delete old completed sessions and their data
-  final oldSessions = await (select(measurementSessions)
-    ..where((s) => s.endTime.isNotNull() & 
-          s.endTime.isSmallerThanValue(cutoffDate) &
-          s.status.equals('completed')))
-      .get();
-      
+      final oldSessions =
+          await (select(measurementSessions)..where(
+                (s) =>
+                    s.endTime.isNotNull() &
+                    s.endTime.isSmallerThanValue(cutoffDate) &
+                    s.status.equals('completed'),
+              ))
+              .get();
+
       for (final session in oldSessions) {
         await _deleteSessionData(session.sessionId);
       }
     }
-    
+
     if (sampleRetention != null) {
       final cutoffDate = now.subtract(sampleRetention);
-      
+
       // Archive old ECG samples to batches and delete individual samples
       await _archiveOldEcgSamples(cutoffDate);
     }
@@ -129,13 +134,27 @@ class AppDatabase extends _$AppDatabase {
   /// Delete all data for a session
   Future<void> _deleteSessionData(String sessionId) async {
     await transaction(() async {
-      await (delete(ecgSamples)..where((s) => s.sessionId.equals(sessionId))).go();
-      await (delete(ecgSampleBatches)..where((s) => s.sessionId.equals(sessionId))).go();
-      await (delete(heartRateSamples)..where((s) => s.sessionId.equals(sessionId))).go();
-      await (delete(hrvSamples)..where((s) => s.sessionId.equals(sessionId))).go();
-      await (delete(analysisResults)..where((s) => s.sessionId.equals(sessionId))).go();
-      await (delete(exportHistory)..where((s) => s.sessionId.equals(sessionId))).go();
-      await (delete(measurementSessions)..where((s) => s.sessionId.equals(sessionId))).go();
+      await (delete(
+        ecgSamples,
+      )..where((s) => s.sessionId.equals(sessionId))).go();
+      await (delete(
+        ecgSampleBatches,
+      )..where((s) => s.sessionId.equals(sessionId))).go();
+      await (delete(
+        heartRateSamples,
+      )..where((s) => s.sessionId.equals(sessionId))).go();
+      await (delete(
+        hrvSamples,
+      )..where((s) => s.sessionId.equals(sessionId))).go();
+      await (delete(
+        analysisResults,
+      )..where((s) => s.sessionId.equals(sessionId))).go();
+      await (delete(
+        exportHistory,
+      )..where((s) => s.sessionId.equals(sessionId))).go();
+      await (delete(
+        measurementSessions,
+      )..where((s) => s.sessionId.equals(sessionId))).go();
     });
   }
 
@@ -147,8 +166,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Get database size statistics
   Future<DatabaseStats> getDatabaseStats() async {
-    final result = await customSelect(
-      '''
+    final result = await customSelect('''
       SELECT 
         (SELECT COUNT(*) FROM measurement_sessions) as session_count,
         (SELECT COUNT(*) FROM ecg_samples) as ecg_sample_count,
@@ -156,8 +174,7 @@ class AppDatabase extends _$AppDatabase {
         (SELECT COUNT(*) FROM heart_rate_samples) as hr_sample_count,
         (SELECT COUNT(*) FROM hrv_samples) as hrv_sample_count,
         (SELECT COUNT(*) FROM analysis_results) as analysis_count
-      ''',
-    ).getSingle();
+      ''').getSingle();
 
     return DatabaseStats(
       sessionCount: result.read<int>('session_count'),
@@ -197,7 +214,7 @@ class DatabaseStats {
     required this.analysisCount,
   });
 
-  double get totalSampleCount => 
+  double get totalSampleCount =>
       (ecgSampleCount + hrSampleCount + hrvSampleCount).toDouble();
 
   @override

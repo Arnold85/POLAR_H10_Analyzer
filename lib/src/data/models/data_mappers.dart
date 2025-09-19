@@ -8,8 +8,8 @@ extension PolarDeviceMapper on PolarDevice {
   /// Convert domain model to database companion
   db.PolarDevicesCompanion toCompanion() {
     return db.PolarDevicesCompanion.insert(
-  deviceId: deviceId,
-  name: name,
+      deviceId: deviceId,
+      name: name,
       firmwareVersion: Value(firmwareVersion),
       batteryLevel: Value(batteryLevel),
       connectionStatus: connectionStatus.name,
@@ -147,7 +147,9 @@ extension HeartRateSampleMapper on HeartRateSample {
       sessionId: sessionId,
       timestamp: timestamp,
       heartRate: heartRate,
-      rrIntervals: Value(rrIntervals.isNotEmpty ? jsonEncode(rrIntervals) : null),
+      rrIntervals: Value(
+        rrIntervals.isNotEmpty ? jsonEncode(rrIntervals) : null,
+      ),
       contactDetected: contactDetected,
       quality: Value(quality),
       source: source.name,
@@ -162,8 +164,8 @@ extension HeartRateSampleEntityMapper on db.HeartRateSample {
       sessionId: sessionId,
       timestamp: timestamp,
       heartRate: heartRate,
-      rrIntervals: rrIntervals != null 
-          ? List<int>.from(jsonDecode(rrIntervals!)) 
+      rrIntervals: rrIntervals != null
+          ? List<int>.from(jsonDecode(rrIntervals!))
           : [],
       contactDetected: contactDetected,
       quality: quality,
