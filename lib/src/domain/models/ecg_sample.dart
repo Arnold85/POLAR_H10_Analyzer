@@ -7,22 +7,22 @@ part 'ecg_sample.g.dart';
 class EcgSample {
   /// Session this sample belongs to
   final String sessionId;
-  
+
   /// Timestamp of the sample
   final DateTime timestamp;
-  
+
   /// ECG voltage value in millivolts (mV)
   final double voltage;
-  
+
   /// Sample sequence number within session
   final int sequenceNumber;
-  
+
   /// Quality indicator for this sample (0-100)
   final int? quality;
-  
+
   /// Whether this sample contains an R-peak detection
   final bool isRPeak;
-  
+
   /// Lead/channel identifier (for multi-lead ECG)
   final String? leadId;
 
@@ -79,29 +79,29 @@ class EcgSample {
 }
 
 /// Batch of ECG samples for efficient processing
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class EcgSampleBatch {
   /// Session this batch belongs to
   final String sessionId;
-  
+
   /// Batch start timestamp
   final DateTime startTimestamp;
-  
+
   /// Batch end timestamp
   final DateTime endTimestamp;
-  
+
   /// Sampling rate in Hz
   final double samplingRate;
-  
+
   /// ECG voltage values in sequence
   final List<double> voltages;
-  
+
   /// R-peak indices within this batch
   final List<int> rPeakIndices;
-  
+
   /// Batch sequence number
   final int batchNumber;
-  
+
   /// Quality metrics for this batch
   final BatchQuality? quality;
 
@@ -124,24 +124,24 @@ class EcgSampleBatch {
   /// Convert batch to individual ECG samples
   List<EcgSample> toSamples() {
     final samples = <EcgSample>[];
-    final timeDelta = Duration(
-      microseconds: (1000000 / samplingRate).round(),
-    );
-    
+    final timeDelta = Duration(microseconds: (1000000 / samplingRate).round());
+
     for (int i = 0; i < voltages.length; i++) {
       final timestamp = startTimestamp.add(timeDelta * i);
       final isRPeak = rPeakIndices.contains(i);
-      
-      samples.add(EcgSample(
-        sessionId: sessionId,
-        timestamp: timestamp,
-        voltage: voltages[i],
-        sequenceNumber: (batchNumber * voltages.length) + i,
-        isRPeak: isRPeak,
-        quality: quality?.averageQuality,
-      ));
+
+      samples.add(
+        EcgSample(
+          sessionId: sessionId,
+          timestamp: timestamp,
+          voltage: voltages[i],
+          sequenceNumber: (batchNumber * voltages.length) + i,
+          isRPeak: isRPeak,
+          quality: quality?.averageQuality,
+        ),
+      );
     }
-    
+
     return samples;
   }
 
@@ -156,13 +156,13 @@ class EcgSampleBatch {
 class BatchQuality {
   /// Average signal quality (0-100)
   final int averageQuality;
-  
+
   /// Signal-to-noise ratio
   final double? snr;
-  
+
   /// Number of artifacts detected
   final int artifactCount;
-  
+
   /// Baseline wander level
   final double? baselineWander;
 
