@@ -20,4 +20,5 @@ class AppTheme {
         ),
         cardTheme: const CardTheme(margin: EdgeInsets.zero),
       );
+
 }
