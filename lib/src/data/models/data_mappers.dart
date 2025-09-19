@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import '../../domain/models/models.dart';
 import 'package:drift/drift.dart' show Value;
 import '../datasources/local/app_database.dart' as db;
@@ -292,6 +293,24 @@ extension HrvSampleMapper on HrvSample {
       meanRR: Value(meanRR),
       heartRate: Value(heartRate),
       stressIndex: Value(stressIndex),
+    );
+  }
+}
+
+extension HrvSampleEntityMapper on db.HrvSample {
+  /// Convert database entity to domain model
+  HrvSample toDomainModel() {
+    return HrvSample(
+      sessionId: sessionId,
+      timestamp: timestamp,
+      rrIntervals: List<int>.from(jsonDecode(rrIntervals)),
+      windowSeconds: windowSeconds,
+      rmssd: rmssd,
+      sdnn: sdnn,
+      pnn50: pnn50,
+      meanRR: meanRR,
+      heartRate: heartRate,
+      stressIndex: stressIndex,
     );
   }
 }
