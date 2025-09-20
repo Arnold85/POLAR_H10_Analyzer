@@ -24,7 +24,7 @@ android {
         applicationId = "com.example.polar_h10_analyzer"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 24  // Required for Polar SDK BLE functionality
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -41,4 +41,9 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Polar SDK for BLE connectivity
+    implementation("com.github.polarofficial:polar-ble-sdk:5.1.0")
 }

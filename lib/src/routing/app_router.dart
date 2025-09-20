@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../features/analytics/presentation/analytics_page.dart';
 import '../features/dashboard/presentation/dashboard_page.dart';
+import '../features/polar_ble_demo/polar_ble_demo_page.dart';
 import '../features/sessions/presentation/sessions_page.dart';
 import '../features/settings/presentation/settings_page.dart';
 import '../widgets/app_navigation_shell.dart';
@@ -12,6 +13,7 @@ const String _dashboardPath = '/dashboard';
 const String _sessionsPath = '/sessions';
 const String _analysisPath = '/analysis';
 const String _settingsPath = '/settings';
+const String _polarDemoPath = '/settings/polar-demo';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final _dashboardNavigatorKey = GlobalKey<NavigatorState>(
@@ -71,6 +73,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 name: 'settings',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: SettingsPage()),
+                routes: [
+                  GoRoute(
+                    path: '/polar-demo',
+                    name: 'polar-demo',
+                    pageBuilder: (context, state) =>
+                        const NoTransitionPage(child: PolarBleDemoPage()),
+                  ),
+                ],
               ),
             ],
           ),
