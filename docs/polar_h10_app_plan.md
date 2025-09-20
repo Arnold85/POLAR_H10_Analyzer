@@ -79,3 +79,24 @@
 - Native Plugin-Spezifikation für Polar BLE SDK ausarbeiten.
 - Datenmodell-Entwurf (UML/Schema) vorbereiten.
 - Ressourcen und Tools für Signalverarbeitung/Analyse evaluieren.
+
+## Current project status (snapshot)
+
+- Foundations: Core architecture, data layer and domain models are scaffolded. Drift table definitions and generated artifacts exist in `lib/src/data/datasources/local/`.
+
+- Tooling: `build_runner` code generation has been executed and unit tests currently pass (`flutter test`). A small DB smoke-test was added using an in-memory Drift DB for CI-friendly verification.
+
+- Native integration: The native `polar_bridge` plugin is planned. If you don't see a plugin in `android/` or `packages/`, live BLE streaming will require implementing or integrating a native bridge. Consider creating a Dart-side mock/replay service to speed UI and feature development.
+- Current native integration status: A `polar_bridge` plugin exists under `packages/polar_bridge` with an Android Kotlin implementation. The plugin uses a dynamic reflective callback proxy to the Polar BLE SDK and emits comprehensive runtime events via an `EventChannel` (e.g., `blePower`, `scanResult`, `connection`, `feature`, `streamSettings`, `hr`, `ecg`, `battery`, `dis`, `error`, `unhandledCallback`). The plugin has been recently updated to attempt emitting `samplingRate` and `startTimeStamp` where available and to emit `streamSettings` before starting ECG streaming.
+
+Immediate recommended actions and observations:
+1. Observed runtime behavior: during live testing the app can scan, connect to a Polar H10, receive frequent `hr` events, and emits `streamSettings` events; ECG streaming may fail with `ERROR_ALREADY_IN_STATE` if the device is already recording or the SDK refuses duplicate starts. The plugin and Dart consumer include defensive fallbacks (samplingRate fallback, timestamp reconstruction).
+2. Action: Add defensive logic to avoid duplicate ECG start requests (store per-device streaming state), and treat `ERROR_ALREADY_IN_STATE` as a non-fatal warning where appropriate.
+3. Action: Enhance native reflection to search nested fields or call accessor methods if the `PolarSensorSetting` exposes sampling rate in a nested structure. This will reduce reliance on fallbacks and improve timestamp accuracy.
+4. Action: Add `stream_settings` and `ecg_batch` schema fields (sampling_rate, start_timestamp, raw_settings) and persist `streamSettings` events to the DB during the first few integration runs.
+
+- Immediate recommended actions:
+  1. Add a CI workflow that runs `flutter pub get`, `flutter pub run build_runner build --delete-conflicting-outputs`, and `flutter test` on each PR.
+  2. Verify and, if missing, add TensorFlow Lite model assets to `pubspec.yaml` before implementing local model inference.
+  3. Add repository and service-level unit tests using the in-memory DB constructor (`AppDatabase.forTesting`) to increase confidence in migrations and repositories.
+

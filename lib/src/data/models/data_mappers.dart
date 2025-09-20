@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:typed_data';
+import 'compression_utils.dart';
 import '../../domain/models/models.dart';
 import 'package:drift/drift.dart' show Value;
 import '../datasources/local/app_database.dart' as db;
@@ -237,31 +237,11 @@ extension AnalysisResultEntityMapper on db.AnalysisResult {
   }
 }
 
-// Helper methods for decompressing ECG batch data
-List<double> _decompressVoltageData(Uint8List data) {
-  final buffer = ByteData.sublistView(data);
-  final voltages = <double>[];
-  for (int i = 0; i < data.length; i += 2) {
-    voltages.add(buffer.getInt16(i) / 1000.0);
-  }
-  return voltages;
-}
-
-List<int> _decompressRPeakIndices(Uint8List? data) {
-  if (data == null || data.isEmpty) return [];
-  final buffer = ByteData.sublistView(data);
-  final indices = <int>[];
-  for (int i = 0; i < data.length; i += 4) {
-    indices.add(buffer.getInt32(i));
-  }
-  return indices;
-}
-
-extension EcgSampleBatchEntityMapper on db.EcgSampleBatch {
+extension EcgSampleBatchEntityMapper on db.EcgSampleBatche {
   /// Convert database entity to domain batch model
   EcgSampleBatch toDomainBatch() {
-    final voltages = _decompressVoltageData(voltagesData);
-    final rPeak = _decompressRPeakIndices(rPeakIndices);
+    final voltages = decompressVoltageData(voltagesData);
+    final rPeak = decompressRPeakIndices(rPeakIndices);
 
     final quality = qualityMetrics != null
         ? BatchQuality.fromJson(jsonDecode(qualityMetrics!))
@@ -279,6 +259,8 @@ extension EcgSampleBatchEntityMapper on db.EcgSampleBatch {
     );
   }
 }
+
+// Note: decompression helpers moved to `compression_utils.dart`
 
 extension HrvSampleMapper on HrvSample {
   db.HrvSamplesCompanion toCompanion() {

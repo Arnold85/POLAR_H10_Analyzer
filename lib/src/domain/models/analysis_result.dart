@@ -1,4 +1,3 @@
-
 import 'package:json_annotation/json_annotation.dart';
 
 part 'analysis_result.g.dart';
@@ -8,31 +7,31 @@ part 'analysis_result.g.dart';
 class AnalysisResult {
   /// Unique analysis result identifier
   final String analysisId;
-  
+
   /// Session this analysis belongs to
   final String sessionId;
-  
+
   /// Type of analysis performed
   final AnalysisType analysisType;
-  
+
   /// Timestamp when analysis was performed
   final DateTime analysisTimestamp;
-  
+
   /// Version of the analysis algorithm used
   final String algorithmVersion;
-  
+
   /// Overall analysis status
   final AnalysisStatus status;
-  
+
   /// Analysis results data
   final AnalysisData data;
-  
+
   /// Confidence level of the analysis (0-100)
   final int? confidence;
-  
+
   /// Error message if analysis failed
   final String? errorMessage;
-  
+
   /// Processing time in milliseconds
   final int? processingTimeMs;
 
@@ -101,16 +100,16 @@ class AnalysisResult {
 class AnalysisData {
   /// Statistical metrics
   final StatisticalMetrics? statistical;
-  
+
   /// HRV (Heart Rate Variability) metrics
   final HrvMetrics? hrv;
-  
+
   /// Frequency domain metrics
   final FrequencyMetrics? frequency;
-  
+
   /// AI-generated insights
   final AiInsights? aiInsights;
-  
+
   /// Custom analysis metrics
   final Map<String, dynamic>? customMetrics;
 
@@ -133,19 +132,19 @@ class AnalysisData {
 class StatisticalMetrics {
   /// Mean heart rate (BPM)
   final double meanHeartRate;
-  
+
   /// Minimum heart rate (BPM)
   final int minHeartRate;
-  
+
   /// Maximum heart rate (BPM)
   final int maxHeartRate;
-  
+
   /// Standard deviation of heart rate
   final double heartRateStd;
-  
+
   /// Total number of heartbeats
   final int totalBeats;
-  
+
   /// Average RR interval (ms)
   final double meanRR;
 
@@ -169,19 +168,19 @@ class StatisticalMetrics {
 class HrvMetrics {
   /// RMSSD - Root Mean Square of Successive Differences (ms)
   final double rmssd;
-  
+
   /// SDNN - Standard Deviation of NN intervals (ms)
   final double sdnn;
-  
+
   /// pNN50 - Percentage of NN intervals > 50ms different from previous
   final double pnn50;
-  
+
   /// Triangular index
   final double? triangularIndex;
-  
+
   /// Stress index (0-100)
   final int stressIndex;
-  
+
   /// Autonomic balance indicator
   final AutonomicBalance autonomicBalance;
 
@@ -205,16 +204,16 @@ class HrvMetrics {
 class FrequencyMetrics {
   /// Very Low Frequency power (ms²)
   final double vlf;
-  
+
   /// Low Frequency power (ms²)
   final double lf;
-  
+
   /// High Frequency power (ms²)
   final double hf;
-  
+
   /// LF/HF ratio
   final double lfHfRatio;
-  
+
   /// Total power (ms²)
   final double totalPower;
 
@@ -237,16 +236,16 @@ class FrequencyMetrics {
 class AiInsights {
   /// Overall health assessment
   final String? healthAssessment;
-  
+
   /// Stress level interpretation
   final String? stressInterpretation;
-  
+
   /// Recovery recommendations
   final List<String> recommendations;
-  
+
   /// Detected patterns or anomalies
   final List<String> patterns;
-  
+
   /// Confidence in AI analysis (0-100)
   final int confidence;
 

@@ -1,0 +1,21 @@
+name: polar_bridge
+description: Flutter plugin bridging Polar BLE SDK (Android) for Polar H10 Analyzer.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.9.0 <4.0.0"
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  meta: ^1.11.0
+  stream_transform: ^2.1.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.example.polar_bridge
+        pluginClass: PolarBridgePlugin

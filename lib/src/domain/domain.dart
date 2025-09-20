@@ -1,5 +1,4 @@
 // Domain Models
-export 'models/hrv_metrics.dart';
 export 'models/heart_rate_analysis.dart';
 export 'models/stress_indicator.dart';
 export 'models/analysis_result.dart';

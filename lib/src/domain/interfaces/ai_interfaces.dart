@@ -1,21 +1,19 @@
 import '../models/analysis_result.dart';
-import '../models/hrv_metrics.dart';
-import '../models/heart_rate_analysis.dart';
-import '../models/stress_indicator.dart';
+// imports removed; this interface references only AnalysisResult and related types
 
 /// Abstract analysis engine interface
-/// 
+///
 /// Provides the main abstraction layer for switching between local and cloud AI models
 /// as specified in the development plan's KI-Strategie
 abstract class AnalysisEngine {
   /// Initialize the analysis engine
-  /// 
+  ///
   /// [config] Configuration for the engine
   /// Returns true if initialization was successful
   Future<bool> initialize(AnalysisEngineConfig config);
 
   /// Perform complete analysis on measurement data
-  /// 
+  ///
   /// [sessionData] Raw measurement session data
   /// [options] Analysis options and preferences
   /// Returns comprehensive analysis result
@@ -25,7 +23,7 @@ abstract class AnalysisEngine {
   });
 
   /// Get AI-generated insights and interpretations
-  /// 
+  ///
   /// [analysisResult] Base analysis results
   /// [context] Additional context for interpretation
   /// Returns AI insights with explanatory text
@@ -35,7 +33,7 @@ abstract class AnalysisEngine {
   });
 
   /// Validate analysis results against known datasets
-  /// 
+  ///
   /// [result] Analysis result to validate
   /// Returns validation metrics
   Future<ValidationMetrics> validateResults(AnalysisResult result);
@@ -51,17 +49,17 @@ abstract class AnalysisEngine {
 }
 
 /// Abstract interface for local AI models using TensorFlow Lite
-/// 
+///
 /// Implements local model strategy as specified in the development plan
 abstract class LocalAnalysisModel {
   /// Load the TensorFlow Lite model
-  /// 
+  ///
   /// [modelPath] Path to the .tflite model file
   /// Returns true if model loaded successfully
   Future<bool> loadModel(String modelPath);
 
   /// Predict HRV metrics from raw RR interval data
-  /// 
+  ///
   /// [rrIntervals] RR intervals in milliseconds
   /// [features] Additional engineered features
   /// Returns predicted HRV metrics with confidence
@@ -71,7 +69,7 @@ abstract class LocalAnalysisModel {
   });
 
   /// Predict stress level from analysis data
-  /// 
+  ///
   /// [inputData] Processed analysis input data
   /// Returns stress prediction with confidence
   Future<ModelPrediction<double>> predictStressLevel(
@@ -79,7 +77,7 @@ abstract class LocalAnalysisModel {
   );
 
   /// Classify heart rate patterns
-  /// 
+  ///
   /// [heartRateData] Time series heart rate data
   /// Returns pattern classification
   Future<ModelPrediction<HeartRatePattern>> classifyHeartRatePattern(
@@ -97,17 +95,17 @@ abstract class LocalAnalysisModel {
 }
 
 /// Abstract interface for cloud-based LLM analysis
-/// 
+///
 /// Implements optional cloud LLM strategy for explanatory text as specified in the development plan
 abstract class CloudLlmAnalyzer {
   /// Initialize connection to cloud LLM service
-  /// 
+  ///
   /// [config] Cloud service configuration
   /// Returns true if connection established
   Future<bool> initialize(CloudLlmConfig config);
 
   /// Generate explanatory text for analysis results
-  /// 
+  ///
   /// [analysisResult] Complete analysis results
   /// [language] Language for explanations (default: German)
   /// Returns detailed explanatory text
@@ -117,7 +115,7 @@ abstract class CloudLlmAnalyzer {
   });
 
   /// Get personalized recommendations
-  /// 
+  ///
   /// [analysisResult] Analysis results
   /// [userProfile] User profile for personalization
   /// Returns list of recommendations
@@ -127,7 +125,7 @@ abstract class CloudLlmAnalyzer {
   });
 
   /// Interpret trends and patterns
-  /// 
+  ///
   /// [historicalResults] List of previous analysis results
   /// [currentResult] Current analysis result
   /// Returns trend interpretation
@@ -137,14 +135,11 @@ abstract class CloudLlmAnalyzer {
   );
 
   /// Answer specific questions about analysis
-  /// 
+  ///
   /// [question] User question about their analysis
   /// [context] Analysis context for answering
   /// Returns detailed answer
-  Future<String> answerQuestion(
-    String question,
-    AnalysisResult context,
-  );
+  Future<String> answerQuestion(String question, AnalysisResult context);
 
   /// Check if cloud service is available
   bool get isAvailable;
@@ -352,16 +347,7 @@ enum HeartRatePattern {
 }
 
 /// Analysis engine types
-enum AnalysisEngineType {
-  local,
-  cloud,
-  hybrid,
-}
+enum AnalysisEngineType { local, cloud, hybrid }
 
 /// Cloud service status
-enum CloudServiceStatus {
-  connected,
-  disconnected,
-  error,
-  rateLimited,
-}
+enum CloudServiceStatus { connected, disconnected, error, rateLimited }

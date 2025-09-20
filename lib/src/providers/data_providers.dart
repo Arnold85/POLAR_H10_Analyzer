@@ -5,6 +5,8 @@ import '../data/repositories/repositories.dart';
 import '../domain/repositories/repositories.dart';
 import '../services/export/exports.dart';
 import '../services/background/background.dart';
+import '../services/ble/polar_ble_service.dart';
+import '../services/ble/ble_service.dart';
 
 /// Database provider
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
@@ -77,6 +79,11 @@ final dataServiceProvider = Provider<DataService>((ref) {
   );
 });
 
+/// BLE service provider (real Polar implementation)
+final bleServiceProvider = Provider<BleService>((ref) {
+  return PolarBleService();
+});
+
 /// Combined export service provider for convenience
 final exportServiceProvider = Provider<ExportService>((ref) {
   return ExportService(
@@ -147,7 +154,7 @@ class MultiFormatExportResult {
     required this.pdfResult,
   });
 
-  bool get allSuccessful => 
+  bool get allSuccessful =>
       csvResult.success && edfResult.success && pdfResult.success;
 
   List<String> get allFiles => [
