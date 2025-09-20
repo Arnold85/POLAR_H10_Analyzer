@@ -1,14 +1,14 @@
 import '../models/hrv_metrics.dart';
 import '../models/heart_rate_analysis.dart';
 import '../models/stress_indicator.dart';
-import '../models/analysis_result.dart';
+import 'validation_interfaces.dart';
 
 /// Abstract interface for HRV (Heart Rate Variability) calculations
-/// 
+///
 /// Implements the statistical basis calculations as specified in the development plan
 abstract class HrvCalculator {
   /// Calculate HRV metrics from RR intervals
-  /// 
+  ///
   /// [rrIntervals] RR intervals in milliseconds
   /// [windowSize] Analysis window size in milliseconds (optional)
   /// Returns calculated HRV metrics
@@ -18,25 +18,25 @@ abstract class HrvCalculator {
   });
 
   /// Calculate RMSSD (Root Mean Square of Successive Differences)
-  /// 
+  ///
   /// [rrIntervals] RR intervals in milliseconds
   /// Returns RMSSD value in milliseconds
   double calculateRmssd(List<double> rrIntervals);
 
   /// Calculate SDNN (Standard Deviation of NN intervals)
-  /// 
+  ///
   /// [rrIntervals] RR intervals in milliseconds
   /// Returns SDNN value in milliseconds
   double calculateSdnn(List<double> rrIntervals);
 
   /// Calculate pNN50 (percentage of NN intervals differing by more than 50ms)
-  /// 
+  ///
   /// [rrIntervals] RR intervals in milliseconds
   /// Returns pNN50 as percentage (0-100)
   double calculatePnn50(List<double> rrIntervals);
 
   /// Calculate additional HRV time-domain metrics
-  /// 
+  ///
   /// [rrIntervals] RR intervals in milliseconds
   /// Returns map of additional metrics
   Future<Map<String, double>> calculateAdditionalMetrics(
@@ -44,18 +44,18 @@ abstract class HrvCalculator {
   );
 
   /// Validate RR intervals for quality and completeness
-  /// 
+  ///
   /// [rrIntervals] RR intervals to validate
   /// Returns validation result with quality score
   ValidationResult validateRrIntervals(List<double> rrIntervals);
 }
 
 /// Abstract interface for heart rate analysis
-/// 
+///
 /// Implements resting/maximum pulse analysis as specified in the development plan
 abstract class HeartRateAnalyzer {
   /// Analyze heart rate data and determine zones
-  /// 
+  ///
   /// [heartRateData] Heart rate measurements over time
   /// [rrIntervals] Corresponding RR intervals
   /// [userProfile] User profile for personalized analysis
@@ -67,13 +67,13 @@ abstract class HeartRateAnalyzer {
   });
 
   /// Estimate resting heart rate from data
-  /// 
+  ///
   /// [heartRateData] Heart rate measurements
   /// Returns estimated resting heart rate in bpm
   Future<int> estimateRestingHeartRate(List<HeartRateDataPoint> heartRateData);
 
   /// Estimate maximum heart rate
-  /// 
+  ///
   /// [heartRateData] Heart rate measurements
   /// [userAge] User age for age-based estimation
   /// Returns estimated maximum heart rate in bpm
@@ -83,24 +83,20 @@ abstract class HeartRateAnalyzer {
   });
 
   /// Determine current heart rate zone
-  /// 
+  ///
   /// [currentHr] Current heart rate in bpm
   /// [restingHr] Resting heart rate in bpm
   /// [maxHr] Maximum heart rate in bpm
   /// Returns heart rate zone
-  HeartRateZone determineHeartRateZone(
-    int currentHr,
-    int restingHr,
-    int maxHr,
-  );
+  HeartRateZone determineHeartRateZone(int currentHr, int restingHr, int maxHr);
 }
 
 /// Abstract interface for stress indicator analysis
-/// 
+///
 /// Implements sympathetic/parasympathetic analysis as specified in the development plan
 abstract class StressAnalyzer {
   /// Analyze stress indicators from HRV and heart rate data
-  /// 
+  ///
   /// [hrvMetrics] Calculated HRV metrics
   /// [heartRateAnalysis] Heart rate analysis results
   /// [timeOfDay] Time of measurement for context
@@ -112,7 +108,7 @@ abstract class StressAnalyzer {
   });
 
   /// Calculate sympathetic nervous system activity
-  /// 
+  ///
   /// [hrvMetrics] HRV metrics for analysis
   /// [heartRateData] Heart rate variability data
   /// Returns sympathetic activity score (0.0-1.0)
@@ -122,20 +118,20 @@ abstract class StressAnalyzer {
   );
 
   /// Calculate parasympathetic nervous system activity
-  /// 
+  ///
   /// [hrvMetrics] HRV metrics for analysis
   /// Returns parasympathetic activity score (0.0-1.0)
   Future<double> calculateParasympathetic(HrvMetrics hrvMetrics);
 
   /// Calculate autonomic balance ratio
-  /// 
+  ///
   /// [sympathetic] Sympathetic activity score
   /// [parasympathetic] Parasympathetic activity score
   /// Returns balance ratio (>1.0 = sympathetic dominance)
   double calculateBalanceRatio(double sympathetic, double parasympathetic);
 
   /// Assess overall stress level
-  /// 
+  ///
   /// [sympathetic] Sympathetic activity
   /// [parasympathetic] Parasympathetic activity
   /// [context] Additional context factors
@@ -229,22 +225,7 @@ enum Environment { indoor, outdoor, noisy, quiet, hot, cold }
 enum SleepQuality { poor, fair, good, excellent }
 
 /// Validation result for data quality
-class ValidationResult {
-  const ValidationResult({
-    required this.isValid,
-    required this.qualityScore,
-    this.issues,
-  });
-
-  /// Whether the data passes validation
-  final bool isValid;
-
-  /// Quality score (0.0-1.0)
-  final double qualityScore;
-
-  /// List of identified issues - optional
-  final List<String>? issues;
-}
+// ValidationResult is defined in 'validation_interfaces.dart' to avoid duplicate symbols
 
 /// Time of day representation
 enum TimeOfDay { morning, afternoon, evening, night }

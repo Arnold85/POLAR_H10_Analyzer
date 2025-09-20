@@ -50,6 +50,8 @@ dependencies:
   # Utilities
   json_annotation: ^4.8.1
   uuid: ^4.2.1
+  # Use a newer permission_handler to be compatible with modern Flutter Android embedding
+  permission_handler: ^12.0.0
 
   # Analysis and AI dependencies (as per development plan)
   tflite_flutter: ^0.11.0 # TensorFlow Lite for local models (updated)
@@ -63,6 +65,10 @@ dependencies:
 
   # Charts and visualization
   syncfusion_flutter_charts: ^24.2.9 # As per development plan
+
+  # Local plugin for Polar BLE integration (path)
+  polar_bridge:
+    path: packages/polar_bridge
 
 dev_dependencies:
   flutter_test:

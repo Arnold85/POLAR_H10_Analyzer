@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:meta/meta.dart';
 
 import 'database_tables.dart';
 
@@ -23,6 +24,12 @@ part 'app_database.g.dart';
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
+
+  /// Test-only constructor that accepts a custom [QueryExecutor]. This lets
+  /// unit tests provide an in-memory database (e.g. [NativeDatabase.memory()])
+  /// and avoids platform channels like `path_provider` during tests.
+  @visibleForTesting
+  AppDatabase.forTesting(super.executor);
 
   @override
   int get schemaVersion => 1;

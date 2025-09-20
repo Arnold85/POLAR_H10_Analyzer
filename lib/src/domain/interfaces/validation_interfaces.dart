@@ -1,12 +1,13 @@
 import '../models/analysis_result.dart';
+import 'ai_interfaces.dart';
 
 /// Abstract interface for metrics validation
-/// 
+///
 /// Implements validation against public datasets and QA process
 /// as specified in the development plan
 abstract class MetricsValidator {
   /// Validate analysis results against reference datasets
-  /// 
+  ///
   /// [result] Analysis result to validate
   /// [referenceDataset] Name of reference dataset to compare against
   /// Returns validation metrics including accuracy and sensitivity
@@ -16,7 +17,7 @@ abstract class MetricsValidator {
   );
 
   /// Calculate accuracy metrics for HRV analysis
-  /// 
+  ///
   /// [predictedMetrics] Predicted HRV values
   /// [groundTruthMetrics] Ground truth values from reference
   /// Returns accuracy assessment
@@ -26,7 +27,7 @@ abstract class MetricsValidator {
   );
 
   /// Calculate sensitivity and specificity for classification tasks
-  /// 
+  ///
   /// [predictions] Model predictions
   /// [groundTruth] True classifications
   /// Returns sensitivity and specificity metrics
@@ -36,7 +37,7 @@ abstract class MetricsValidator {
   );
 
   /// Validate signal quality and completeness
-  /// 
+  ///
   /// [signalData] Raw signal data to validate
   /// [expectedDuration] Expected duration of signal
   /// Returns signal quality assessment
@@ -49,18 +50,18 @@ abstract class MetricsValidator {
   List<String> get availableDatasets;
 
   /// Load reference dataset for validation
-  /// 
+  ///
   /// [datasetName] Name of the dataset to load
   /// Returns reference data or null if not available
   Future<ReferenceDataset?> loadReferenceDataset(String datasetName);
 }
 
 /// Abstract interface for quality assurance process
-/// 
+///
 /// Implements QA process as specified in the development plan
 abstract class QualityAssurance {
   /// Perform comprehensive quality check on analysis pipeline
-  /// 
+  ///
   /// [sessionData] Input session data
   /// [analysisResult] Generated analysis result
   /// Returns QA assessment with recommendations
@@ -70,7 +71,7 @@ abstract class QualityAssurance {
   );
 
   /// Validate data preprocessing steps
-  /// 
+  ///
   /// [rawData] Original raw data
   /// [processedData] Data after preprocessing
   /// Returns preprocessing validation result
@@ -80,13 +81,13 @@ abstract class QualityAssurance {
   );
 
   /// Check for potential analysis errors or anomalies
-  /// 
+  ///
   /// [result] Analysis result to check
   /// Returns list of potential issues found
   Future<List<QualityIssue>> detectPotentialIssues(AnalysisResult result);
 
   /// Validate analysis consistency across multiple runs
-  /// 
+  ///
   /// [results] Multiple analysis results from same data
   /// Returns consistency assessment
   Future<ConsistencyAssessment> validateConsistency(
@@ -94,7 +95,7 @@ abstract class QualityAssurance {
   );
 
   /// Generate quality report for analysis session
-  /// 
+  ///
   /// [sessionData] Session data
   /// [analysisResult] Analysis results
   /// [qaAssessment] QA assessment results
@@ -423,24 +424,10 @@ class QualityReport {
 }
 
 /// Session data placeholder (to be defined in data layer)
-class MeasurementSessionData {
-  const MeasurementSessionData({
-    required this.sessionId,
-    required this.data,
-  });
-
-  final String sessionId;
-  final Map<String, dynamic> data;
-}
+// MeasurementSessionData is defined in 'ai_interfaces.dart' to avoid duplicate definitions
 
 /// Issue severity levels
-enum IssueSeverity {
-  critical,
-  high,
-  medium,
-  low,
-  info,
-}
+enum IssueSeverity { critical, high, medium, low, info }
 
 /// Issue categories
 enum IssueCategory {

@@ -122,3 +122,31 @@ The domain layer is exposed through `lib/src/domain/domain.dart` and can be used
 - Service layer for business logic implementation
 
 All interfaces follow the established Flutter architecture patterns used in the project.
+
+## Current project status (snapshot)
+
+- Code generation: `build_runner` has been run and generated Drift artifacts are present under `lib/src/data/datasources/local/` (e.g. `app_database.g.dart`).
+
+- Data & domain wiring: Domain models, mappers, and analysis-related interfaces are scaffolded in `lib/src/domain/` and `lib/src/data/models/`.
+
+- Tests: Unit tests run successfully (`flutter test`) in the current workspace. A small DB smoke-test was added that uses an in-memory Drift DB for CI-friendly verification.
+
+- TFLite & AI: The codebase declares `tflite_flutter` integration points and interfaces (e.g. `LocalAnalysisModel`) but model assets and runtime wiring should be verified/added in `pubspec.yaml` if local inference is required.
+
+- Remaining work: Implement or confirm local TF Lite model assets, finalize analysis engine implementations, and add integration tests for heavy processing (decompression, R-peak detection). Consider moving heavy computations to isolates for performance.
+
+Notes:
+
+- This document remains the design source for analysis components; update it as concrete implementations (filters, R-peak detectors, TFLite models) are merged.
+
+## Current runtime & integration status
+
+- Native plugin: A `polar_bridge` plugin exists under `packages/polar_bridge` with an Android Kotlin implementation. The plugin emits `EventChannel` events for key SDK callbacks and has recently been modified to emit `streamSettings`, attempt to expose `samplingRate`, and include `startTimeStamp`/`startTimeStamp` hints for ECG batches.
+- Dart consumer: `lib/src/services/ble/polar_ble_service.dart` was updated to robustly parse `ecg` and `hr` events, prefer `startTimeStamp`, use `samplingRate` when provided, and reconstruct per-sample timestamps when missing.
+- Tests: Unit tests were executed successfully (`flutter test`) after the Dart parsing updates; service parsing tests cover both cases where `samplingRate` is present and missing (fallback behavior).
+
+## Immediate next steps for analysis components
+
+1. Confirm TF Lite model assets: verify that TFLite model files (if any) are declared in `pubspec.yaml` and available in `assets/`. Add asset declarations and example model harness under `lib/src/services/analysis/` when ready.
+2. Implement R-peak detection and signal-conditioning primitives as concrete `SignalProcessor` implementations. Add tests that run on compressed batches and verify de/compression correctness and timestamp alignment.
+3. Move heavy signal processing to isolates and add integration tests that validate end-to-end latency and memory usage for long sessions.

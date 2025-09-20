@@ -2,6 +2,8 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // Added JitPack repository for Polar BLE SDK dependency
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
