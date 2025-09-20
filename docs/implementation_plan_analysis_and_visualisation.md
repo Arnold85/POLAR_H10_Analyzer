@@ -1,9 +1,9 @@
 
 # Implementation Plan — Analysis & Visualisation
 
-This document contains the expanded, capsule-style implementation plan for the Live Analysis Backbone, Session Review Experience, Advanced Analytics & Detection, and supporting tooling/QA. It is intended for multiple agents to work in parallel.
+This document contains the restructured implementation plan optimized for **exactly 3 agents** working in parallel. Each development phase provides clear, encapsulated tasks with minimal cross-dependencies, allowing agents to work independently while building the Live Analysis Backbone, Session Review Experience, and Advanced Analytics.
 
-> NOTE: This file is derived from the project docs and the requested expansion. It enumerates tasks (capsules), subtasks, file targets, APIs, acceptance criteria, tests, run commands and parallelization recommendations.
+> **3-Agent Strategy**: Each phase assigns one major responsibility per agent (Backend/Data, UI/Widgets, Analysis/Processing) with clear interfaces and handoff points.
 
 ---
 
@@ -17,109 +17,404 @@ This document contains the expanded, capsule-style implementation plan for the L
 
 ---
 
-## Summary mapping (requirements → tasks)
+## 3-Agent Development Phases
 
-- Live Analysis Backbone (1.1–1.5) → Tasks 1–5
-- Session Review Experience (2.1–2.5) → Tasks 6–10
-- Advanced Analytics & Detection (3.1–3.4) → Tasks 11–14
-- Tooling, Integration, QA (4.1–4.5) → Tasks 15–19
+**Phase 1: Live Data Foundation** (2 weeks)
 
----
+- Agent A (Backend): Data pipeline, ring buffers, isolate processing
+- Agent B (UI): ECG strip widget, live dashboard tiles  
+- Agent C (Analysis): Signal processing, filters, R-peak detection
 
-## Capsule Tasks (parallelizable)
+**Phase 2: Session Analysis** (2-3 weeks)
 
-### 1) Stabilise live data pipeline (Task 1)
+- Agent A (Backend): Session storage, replay APIs, export services
+- Agent B (UI): Session overview, charts, brushing interactions
+- Agent C (Analysis): HRV metrics, Poincaré analysis, artifact detection
 
-Goal
+**Phase 3: Advanced Features** (2-3 weeks)
 
-- Reliable ingestion and processing of raw events into timestamped ring buffers; isolate-based processing (downsample, HP filter), R-peak pre-detection, artefact flagging; expose streams via providers.
-
-Files to create/edit
-
-- `lib/src/services/processing/ring_buffer.dart`
-- `lib/src/services/processing/ecg_pipeline.dart`
-- `lib/src/services/processing/processor_isolate.dart`
-- `lib/src/services/processing/filters.dart`
-- `lib/src/services/processing/artifact_detector.dart`
-- `lib/src/services/processing/persistence_sink.dart` (optional for test harness)
-- `lib/src/providers/data_providers.dart` (add processed stream providers)
-- `lib/src/services/ble/polar_ble_service.dart` (ingest hooks)
-
-Subtasks
-
-1. Design a typed ring buffer with `push`, `readNewest`, `length`, and `clear`.
-2. Add ingestion adaptor in `polar_ble_service` to forward raw events to the pipeline.
-3. Implement `ProcessorIsolate` entry that: normalizes values, applies HP filter (0.5 Hz), downsamples to UI rate (default 125 Hz), performs lightweight R-peak pre-detection, and detects artefacts (clipping / flatline / high-slope).
-4. Expose Riverpod providers: `processedEcgStreamProvider`, `rPeaksProvider`, `artefactFlagsProvider`.
-5. Add an in-memory persistence sink for tests.
-
-Acceptance criteria
-
-- Latency from raw ingestion to processed chunk available < 100 ms for typical chunk sizes.
-- Artefact flags are emitted for injected synthetic signals.
-- Unit tests: ring buffer, filter, artifact detector pass.
-
-Tests
-
-- `test/processing/ring_buffer_test.dart`
-- `test/processing/processor_isolate_test.dart`
-
-Example run commands (PowerShell):
-
-```powershell
-flutter pub get
-flutter pub run build_runner build --delete-conflicting-outputs
-flutter test test/processing/ring_buffer_test.dart
-```
-
-Parallelization notes
-
-- Agent A: ring buffer + tests
-- Agent B: processor isolate + filters
-- Agent C: provider wiring + `polar_ble_service` hooks
-- Agent D: persistence sink + tests
+- Agent A (Backend): Persistence optimization, annotation storage
+- Agent B (UI): Distribution charts, sleep visualization, demo pages
+- Agent C (Analysis): Frequency domain, episode detection, AI integration
 
 ---
 
-### 2) CustomPainter ECG strip (Task 2)
+## Phase 1: Live Data Foundation (2 weeks)
 
-Goal
+### Agent A (Backend): Live Data Pipeline
 
-- High-performance `CustomPainter` ECG strip with 8s window, gain controls, soft clipping, R-peak + artefact overlays, offscreen redraw using `ui.Picture` or similar.
+**Goal**: Establish reliable data ingestion, buffering, and provider infrastructure for live streaming.
 
-Files
+**Scope**: Raw event processing, ring buffers, Riverpod providers, persistence hooks
+**Not in scope**: UI components, analysis algorithms, chart libraries
 
-- `lib/src/features/live/widgets/ecg_strip.dart`
-- `lib/src/features/live/ecg_view.dart`
+#### Files to create/edit
 
-Subtasks
+- `lib/src/services/processing/ring_buffer.dart` — Generic ring buffer for high-frequency data
+- `lib/src/services/processing/ecg_pipeline.dart` — Main pipeline orchestrator
+- `lib/src/providers/processing_providers.dart` — Riverpod providers for processed streams
+- `lib/src/services/ble/polar_ble_service.dart` — Add pipeline integration hooks
+- `lib/src/services/processing/persistence_sink.dart` — Test harness and debug logging
 
-1. Build widget skeleton and `EcgStripController` (pause, resume, setGain).
-2. Implement double-buffer / offscreen drawing; only redraw the new right-edge region.
-3. Add soft-clipping (smooth limiter) and draw overlays (R-peaks as dots, artefact regions as bands).
-4. Add widget tests and golden images.
+#### Tasks
 
-Acceptance
+1. **Ring Buffer Implementation** — Create typed `RingBuffer<T>` with thread-safe operations, configurable capacity, and overflow handling
+2. **Pipeline Orchestrator** — Build `EcgPipeline` class that coordinates data flow from BLE → processing → UI providers
+3. **Provider Integration** — Expose `StreamProvider`s for: raw ECG chunks, processed data, and processing status
+4. **BLE Integration Hooks** — Add pipeline ingestion calls to existing `polar_ble_service.dart`
+5. **Test Infrastructure** — Create in-memory sink for unit tests and debug logging
 
-- Smooth scrolling at 60 fps with 125Hz downsample on development device (manual smoke test).
-- Golden tests for multiple gains pass.
+**Interface Contract** (for other agents):
 
-Tests
-
-- `test/widgets/ecg_strip_widget_test.dart`
-- `test/goldens/ecg_strip_gain1.png` (baseline)
-
-Run:
-
-```powershell
-flutter test test/widgets/ecg_strip_widget_test.dart
+```dart
+// Expose these providers for UI consumption
+final processedEcgProvider = StreamProvider<ProcessedChunk>(...)
+final processingStatusProvider = StateProvider<ProcessingStatus>(...)
 ```
 
-Parallelization
+#### Handoff Criteria
 
-- Agent A: widget skeleton + controller
-- Agent B: painting engine (offscreen buffer)
-- Agent C: overlays + golden tests
+- Pipeline providers are exposed and consumable by UI widgets
+- Ring buffer handles 10k+ samples without memory leaks
+- Raw BLE events flow through to `ProcessedChunk` DTOs
+- Unit tests pass for buffer operations and provider state
+
+**Tests**: `test/processing/ring_buffer_test.dart`, `test/providers/processing_providers_test.dart`
+
+---
+
+### Agent B (UI): Live Dashboard Widgets
+
+**Goal**: Build high-performance live visualization widgets for ECG and HR data.
+
+**Scope**: CustomPainter ECG strip, HR tile with sparklines, basic live charts
+**Not in scope**: Data processing, analysis algorithms, session management
+
+#### Files to create/edit
+
+- `lib/src/features/live/widgets/ecg_strip.dart` — CustomPainter ECG strip with gain controls
+- `lib/src/features/live/widgets/hr_tile.dart` — HR dashboard tile with zones and sparklines
+- `lib/src/features/live/live_dashboard.dart` — Main live view layout
+- `lib/src/features/live/controllers/ecg_strip_controller.dart` — Strip control logic
+
+#### Tasks
+
+1. **ECG Strip Widget** — CustomPainter-based scrolling strip (8s window), gain controls, soft clipping
+2. **HR Dashboard Tile** — Current BPM display, 60s sparkline, zone gauge visualization
+3. **Live Dashboard Layout** — Organize widgets with responsive layout, connection status
+4. **Widget Controllers** — Pause/resume, gain adjustment, window size controls
+5. **Golden Tests** — Visual regression tests for key rendering states
+
+**Interface Contract** (consume from Agent A):
+
+```dart
+// Consume these providers from Agent A
+ref.watch(processedEcgProvider) // for ECG strip
+ref.watch(processingStatusProvider) // for connection status
+```
+
+#### Handoff Criteria
+
+- ECG strip renders smoothly at 60fps with test data
+- Widgets respond to provider state changes
+- Golden tests establish visual baselines
+- Controllers provide programmatic widget control
+
+**Tests**: `test/widgets/ecg_strip_test.dart`, `test/goldens/ecg_strip_gain1.png`
+
+---
+
+### Agent C (Analysis): Signal Processing Core
+
+**Goal**: Implement core signal processing algorithms that run in isolates.
+
+**Scope**: Filters, R-peak detection, artifact classification, basic HRV metrics
+**Not in scope**: UI integration, data persistence, advanced analytics
+
+#### Files to create/edit
+
+- `lib/src/services/processing/processor_isolate.dart` — Main processing isolate entry point
+- `lib/src/services/processing/filters.dart` — HP filter, downsampling, signal conditioning
+- `lib/src/services/processing/artifact_detector.dart` — Amplitude/flatline/slope detection
+- `lib/src/services/processing/rpeak_detector.dart` — Basic R-peak detection algorithm
+
+#### Tasks
+
+1. **Processing Isolate** — Isolate entry point that receives raw chunks and returns processed data
+2. **Signal Filters** — HP filter (0.5Hz), downsample to 125Hz, normalization
+3. **Artifact Detection** — Classify clipping, flatline, high-slope artifacts
+4. **R-Peak Detection** — Lightweight algorithm for real-time peak detection
+5. **Performance Optimization** — Ensure <100ms latency for typical chunk sizes
+
+**Interface Contract** (provide to Agent A):
+
+```dart
+// Agent A will call this isolate function
+ProcessedChunk processEcgChunk(RawEcgChunk input) {
+  // Your processing implementation
+}
+```
+
+#### Handoff Criteria
+
+- Isolate processes test signals with correct output
+- Filters remove baseline wander and downsample correctly
+- Artifact detection flags synthetic test cases
+- Processing latency <100ms for 1000-sample chunks
+
+**Tests**: `test/processing/filters_test.dart`, `test/processing/rpeak_detector_test.dart`
+
+---
+
+## Phase 2: Session Analysis (2-3 weeks)
+
+### Agent A (Backend): Session Management & Storage
+
+**Goal**: Build session storage, replay APIs, and export functionality.
+
+**Scope**: Session CRUD, ECG replay queries, CSV/EDF export, annotation storage
+**Not in scope**: UI components, analysis algorithms, chart rendering
+
+#### Files to create/edit (Agent A - Phase 2)
+
+- `lib/src/data/repositories/drift_session_repository.dart` — Extend for replay queries
+- `lib/src/services/export/csv_export_service.dart` — Extend for processed data export
+- `lib/src/data/repositories/drift_annotation_repository.dart` — Store events/annotations
+- `lib/src/services/session/session_service.dart` — Session lifecycle management
+
+#### Tasks (Agent A - Phase 2)
+
+1. **Session Replay API** — `streamEcgForInterval(sessionId, startMs, endMs)` for time-range queries
+2. **Annotation Storage** — Store/retrieve events, quality metrics, user annotations
+3. **Export Extensions** — Add processed metrics to CSV/EDF exports
+4. **Session Service** — Manage session lifecycle, metadata, status tracking
+5. **Background Optimization** — Batch storage service for long sessions
+
+**Interface Contract** (for other agents):
+
+```dart
+// Provide these APIs for UI consumption
+abstract class SessionRepository {
+  Stream<EcgSample> streamEcgForInterval(String sessionId, int startMs, int endMs);
+  Future<List<Annotation>> getAnnotations(String sessionId);
+}
+```
+
+#### Handoff Criteria (Agent A - Phase 2)
+
+- Replay queries return time-aligned ECG data
+- Annotations are stored and retrievable
+- Export includes processed metrics and metadata
+- Session service manages state correctly
+
+**Tests**: `test/repositories/session_repository_test.dart`, `test/services/export_service_test.dart`
+
+---
+
+### Agent B (UI): Session Review Interface
+
+**Goal**: Build comprehensive session analysis UI with synchronized charts.
+
+**Scope**: Session overview, chart synchronization, brushing interactions, timeline
+**Not in scope**: Data processing, export logic, advanced analysis algorithms
+
+#### Files to create/edit (Agent B - Phase 2)
+
+- `lib/src/features/session/session_overview.dart` — Main session analysis screen
+- `lib/src/features/session/widgets/synchronized_charts.dart` — Multi-chart synchronization
+- `lib/src/features/session/widgets/timeline_brush.dart` — Time range selection
+- `lib/src/features/common/viewport_provider.dart` — Shared viewport state
+
+#### Tasks (Agent B - Phase 2)
+
+1. **Session Overview Screen** — Layout with HR trend, RR tachogram, event timeline
+2. **Chart Synchronization** — Shared viewport provider for pan/zoom across charts
+3. **Timeline Brushing** — Select time ranges, trigger ECG replay
+4. **Event Timeline** — Display annotations, quality events, user markers
+5. **Responsive Layout** — Tablet/phone adaptive layouts
+
+**Interface Contract** (consume from Agent A):
+
+```dart
+// Consume these APIs from Agent A
+ref.watch(sessionRepositoryProvider).streamEcgForInterval(...)
+ref.watch(annotationRepositoryProvider).getAnnotations(...)
+```
+
+#### Handoff Criteria (Agent B - Phase 2)
+
+- Charts synchronize pan/zoom across multiple views
+- Brushing triggers ECG replay from storage
+- Timeline displays persisted annotations
+- Responsive layout works on different screen sizes
+
+**Tests**: `test/widgets/session_overview_test.dart`, `test/widgets/synchronized_charts_test.dart`
+
+---
+
+### Agent C (Analysis): HRV & Advanced Metrics
+
+**Goal**: Implement HRV analysis, Poincaré plots, and quality assessment.
+
+**Scope**: HRV metrics, Poincaré analysis, RR cleaning, quality classification
+**Not in scope**: UI components, data storage, export formatting
+
+#### Files to create/edit (Agent C - Phase 2)
+
+- `lib/src/services/analysis/hrv_service.dart` — Sliding window HRV metrics
+- `lib/src/services/analysis/poincare_service.dart` — Poincaré plot computation
+- `lib/src/services/processing/rr_cleaner.dart` — RR interval cleaning
+- `lib/src/services/analysis/quality_assessor.dart` — Signal quality scoring
+
+#### Tasks (Agent C - Phase 2)
+
+1. **HRV Metrics Service** — RMSSD, SDNN, pNN50 with sliding windows
+2. **Poincaré Analysis** — SD1/SD2 computation, scatter plot data
+3. **RR Cleaning** — Ectopy removal, interpolation, outlier detection
+4. **Quality Assessment** — Signal quality scoring per time segment
+5. **Performance Optimization** — Cache results, efficient windowing
+
+**Interface Contract** (provide to Agent B):
+
+```dart
+// Provide these services for UI consumption
+abstract class HrvService {
+  Stream<HrvMetrics> slidingWindowMetrics(List<int> rrIntervals);
+}
+abstract class PoincareService {
+  PoincareResult computePoincare(List<int> rrIntervals);
+}
+```
+
+#### Handoff Criteria (Agent C - Phase 2)
+
+- HRV metrics match reference implementations
+- Poincaré computation produces correct SD1/SD2
+- RR cleaning improves signal quality metrics
+- Services handle edge cases (short recordings, artifacts)
+
+**Tests**: `test/services/hrv_service_test.dart`, `test/services/poincare_service_test.dart`
+
+---
+
+## Phase 3: Advanced Features (2-3 weeks)
+
+### Agent A (Backend): Optimization & Integration
+
+**Goal**: Performance optimization, advanced persistence, and system integration.
+
+**Scope**: DB optimization, compression, batch processing, CI/CD setup
+**Not in scope**: UI features, analysis algorithms, user-facing functionality
+
+#### Files to create/edit (Agent A - Phase 3)
+
+- `lib/src/data/models/compression_utils.dart` — Extend compression for metrics
+- `lib/src/services/background/batch_storage_service.dart` — Optimize long sessions
+- `.github/workflows/ci.yml` — CI pipeline with golden tests
+- `lib/src/config/feature_flags.dart` — Feature flag system
+
+#### Tasks (Agent A - Phase 3)
+
+1. **Compression Optimization** — Store processed metrics in compressed batches
+2. **Batch Storage Service** — Background optimization for long recordings
+3. **CI/CD Pipeline** — Automated testing, golden test management
+4. **Feature Flags** — Gate experimental features, chart libraries
+5. **Performance Monitoring** — Add telemetry for processing latency
+
+#### Handoff Criteria (Agent A - Phase 3)
+
+- Compression reduces storage by >50% for typical sessions
+- Background service handles multi-hour recordings
+- CI pipeline runs tests and manages golden baselines
+- Feature flags control experimental features
+
+**Tests**: `test/data/compression_test.dart`, `test/services/batch_storage_test.dart`
+
+---
+
+### Agent B (UI): Advanced Visualizations
+
+**Goal**: Specialized analysis views and user experience enhancements.
+
+**Scope**: Distribution charts, sleep visualization, demo pages, accessibility
+**Not in scope**: Backend optimization, analysis algorithms, data processing
+
+#### Files to create/edit (Agent B - Phase 3)
+
+- `lib/src/features/session/distributions.dart` — RR/HR histograms
+- `lib/src/features/session/sleep_sketch.dart` — Sleep-like visualization
+- `lib/src/features/demo/demo_charts.dart` — Chart library showcase
+- `lib/src/features/common/accessibility_features.dart` — A11y improvements
+
+#### Tasks (Agent B - Phase 3)
+
+1. **Distribution Charts** — RR/HR histograms with density overlays
+2. **Sleep Visualization** — Hypnogram-style sleep phase display
+3. **Demo Page** — Interactive showcase of all chart types
+4. **Accessibility** — Screen reader support, keyboard navigation
+5. **UI Polish** — Animations, loading states, error handling
+
+**Interface Contract** (consume from Agent C):
+
+```dart
+// Consume these analysis services
+ref.watch(sleepAnalysisProvider) // from Agent C
+ref.watch(distributionAnalysisProvider) // from Agent C
+```
+
+#### Handoff Criteria (Agent B - Phase 3)
+
+- Distribution charts render correctly for various data ranges
+- Sleep visualization shows meaningful patterns
+- Demo page showcases all implemented features
+- Accessibility testing passes automated checks
+
+**Tests**: `test/widgets/distributions_test.dart`, `test/a11y/accessibility_test.dart`
+
+---
+
+### Agent C (Analysis): AI & Advanced Detection
+
+**Goal**: Frequency domain analysis, episode detection, and AI integration foundations.
+
+**Scope**: FFT analysis, episode detection, sleep heuristics, AI interfaces
+**Not in scope**: UI components, data storage, chart rendering
+
+#### Files to create/edit (Agent C - Phase 3)
+
+- `lib/src/services/analysis/frequency_service.dart` — FFT-based spectral analysis
+- `lib/src/services/analysis/episode_detector.dart` — Brady/tachy/pause detection
+- `lib/src/services/analysis/sleep_analysis.dart` — Heuristic sleep detection
+- `lib/src/domain/interfaces/ai_interfaces.dart` — Future AI integration points
+
+#### Tasks (Agent C - Phase 3)
+
+1. **Frequency Analysis** — LF/HF spectrum using fftea, spectral timeline
+2. **Episode Detection** — Detect brady/tachy/pause episodes with configurable thresholds
+3. **Sleep Analysis** — Heuristic sleep-wake detection from HR/HRV patterns
+4. **AI Interface Layer** — Abstract interfaces for future TensorFlow Lite integration
+5. **Validation Framework** — Compare results with reference datasets
+
+**Interface Contract** (provide to Agent B):
+
+```dart
+// Provide these advanced analysis services
+abstract class FrequencyService {
+  Stream<SpectralResult> computeSpectrum(List<int> rrIntervals);
+}
+abstract class EpisodeDetector {
+  List<Episode> detectEpisodes(List<HeartRateSample> samples);
+}
+```
+
+#### Handoff Criteria (Agent C - Phase 3)
+
+- FFT analysis produces correct spectral peaks for test signals
+- Episode detector flags synthetic test cases correctly
+- Sleep analysis identifies sleep-like patterns
+- AI interfaces are ready for future model integration
+
+**Tests**: `test/services/frequency_service_test.dart`, `test/services/episode_detector_test.dart`
 
 ---
 
@@ -811,29 +1106,86 @@ Suggested CI steps (`.github/workflows/ci.yml`):
 
 ---
 
-## Sprint & work distribution recommendations
+## 3-Agent Work Distribution Summary
 
-- Sprint 1 (2 weeks): Tasks 1–4 — Pipeline + ECG painter + Tachogram + HR tile
-- Sprint 2 (2–3 weeks): Tasks 5–10 — Poincaré, Session viewer, HRV service, distributions
-- Sprint 3 (2–3 weeks): Tasks 11–19 — Frequency domain, detectors, exports, QA
+### Agent A (Backend/Data Specialist)
 
-Agent assignment suggestions (8 agents)
+**Focus**: Data flow, persistence, APIs, system integration
 
-- Agent 1 — Pipeline (#1)
-- Agent 2 — ECG painter (#2)
-- Agent 3 — Tachogram & session scaffold (#3, #6)
-- Agent 4 — HR tile & alerts (#4)
-- Agent 5 — Poincaré & HRV (#5, #8, #9)
-- Agent 6 — Frequency & detector (#11, #12)
-- Agent 7 — Export & persistence (#10, #18)
-- Agent 8 — QA & docs (#16, #17, #19)
+- **Phase 1**: Ring buffers, pipeline orchestration, provider setup
+- **Phase 2**: Session storage, replay APIs, export services
+- **Phase 3**: Performance optimization, CI/CD, feature flags
+
+### Agent B (UI/Frontend Specialist)
+
+**Focus**: Widgets, user experience, visual components
+
+- **Phase 1**: ECG strip widget, HR dashboard, live visualizations
+- **Phase 2**: Session overview, chart synchronization, interactions
+- **Phase 3**: Advanced charts, accessibility, UI polish
+
+### Agent C (Analysis/Processing Specialist)
+
+**Focus**: Signal processing, algorithms, analytics
+
+- **Phase 1**: Filters, R-peak detection, artifact classification
+- **Phase 2**: HRV metrics, Poincaré analysis, quality assessment
+- **Phase 3**: Frequency analysis, episode detection, AI foundations
+
+### Cross-Phase Dependencies
+
+#### Phase 1 → Phase 2
+
+- Agent A provides: Stream providers, data pipeline APIs
+- Agent B provides: Widget controllers, live dashboard patterns
+- Agent C provides: Processing isolates, signal processing APIs
+
+#### Phase 2 → Phase 3
+
+- Agent A provides: Session storage, annotation APIs
+- Agent B provides: Chart synchronization, interaction patterns
+- Agent C provides: HRV services, quality metrics
+
+### Handoff Protocols
+
+1. **Interface-First Development**: Define contracts before implementation
+2. **Mock-Driven Testing**: Use mocks/stubs until dependencies are ready
+3. **Integration Points**: Weekly sync to align interfaces and test integration
+4. **Documentation**: Each agent documents their public APIs in code comments
 
 ---
 
-## Minimal next actions (pick one)
+## Immediate Next Actions (Phase 1 Kickoff)
 
-- Implement Task #1 (add `ring_buffer.dart`, `processor_isolate.dart`, test harness). I can start this now.
-- Or produce `ProcessedChunk` model + provider stubs so UI teams can begin integration.
+### Day 1: Interface Definition (All Agents)
+
+1. **Define shared DTOs**: `ProcessedChunk`, `ProcessingStatus`, `RawEcgChunk`
+2. **Agree on provider contracts**: What each agent will expose/consume
+3. **Set up test data**: Synthetic ECG signals for independent testing
+
+### Day 1-2: Agent A Backend Foundation
+
+1. Create `RingBuffer<T>` with unit tests
+2. Set up provider skeleton in `lib/src/providers/processing_providers.dart`
+3. Add pipeline hooks to existing `polar_ble_service.dart`
+
+### Day 1-2: Agent B UI Components
+
+1. Create ECG strip widget skeleton with mock data
+2. Set up golden test infrastructure
+3. Build HR tile layout with placeholder providers
+
+### Day 1-2: Agent C Processing Core
+
+1. Implement basic HP filter in pure Dart
+2. Create isolate entry point with mock processing
+3. Add R-peak detection algorithm skeleton
+
+### Week 1 Integration Checkpoint
+
+- All agents demo their components with mock/test data
+- Verify provider contracts work end-to-end
+- Adjust interfaces based on integration testing
 
 ---
 
