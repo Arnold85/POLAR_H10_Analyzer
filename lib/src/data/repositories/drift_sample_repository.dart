@@ -4,12 +4,12 @@ import 'package:drift/drift.dart';
 import '../../domain/models/ecg_sample.dart';
 import '../../domain/models/heart_rate_sample.dart';
 import '../../domain/repositories/sample_repository.dart';
-import '../datasources/local/app_database.dart';
+import '../datasources/local/app_database.dart' as db;
 import '../models/data_mappers.dart';
 
 /// Concrete implementation of SampleRepository using Drift database
 class DriftSampleRepository implements SampleRepository {
-  final AppDatabase _database;
+  final db.AppDatabase _database;
 
   const DriftSampleRepository(this._database);
 
@@ -21,7 +21,7 @@ class DriftSampleRepository implements SampleRepository {
 
     await _database.batch((batch) {
       for (final sample in samples) {
-        batch.insertOnConflictUpdate(
+        batch.insert(
           _database.ecgSamples,
           sample.toCompanion(),
         );
@@ -40,7 +40,7 @@ class DriftSampleRepository implements SampleRepository {
         : null;
 
     await _database.into(_database.ecgSampleBatches).insertOnConflictUpdate(
-      EcgSampleBatchesCompanion.insert(
+      db.EcgSampleBatchesCompanion.insert(
         sessionId: batch.sessionId,
         startTimestamp: batch.startTimestamp,
         endTimestamp: batch.endTimestamp,
@@ -345,99 +345,5 @@ class DriftSampleRepository implements SampleRepository {
       indices.add(buffer.getInt32(i));
     }
     return indices;
-  }
-}
-
-// Extensions for domain model conversion
-
-extension EcgSampleEntityToDomain on EcgSample {
-  EcgSample toDomainModel() {
-    return EcgSample(
-      sessionId: sessionId,
-      timestamp: timestamp,
-      voltage: voltage,
-      sequenceNumber: sequenceNumber,
-      quality: quality,
-      isRPeak: isRPeak,
-      leadId: leadId,
-    );
-  }
-}
-
-extension EcgSampleBatchEntityToDomain on EcgSampleBatchData {
-  EcgSampleBatch toDomainBatch() {
-    final repo = DriftSampleRepository(AppDatabase());
-    final voltages = repo._decompressVoltageData(voltagesData);
-    final rPeakIndices = rPeakIndices != null 
-        ? repo._decompressRPeakIndices(rPeakIndices!)
-        : <int>[];
-    
-    final quality = qualityMetrics != null
-        ? BatchQuality.fromJson(jsonDecode(qualityMetrics!))
-        : null;
-
-    return EcgSampleBatch(
-      sessionId: sessionId,
-      startTimestamp: startTimestamp,
-      endTimestamp: endTimestamp,
-      samplingRate: samplingRate,
-      voltages: voltages,
-      rPeakIndices: rPeakIndices,
-      batchNumber: batchNumber,
-      quality: quality,
-    );
-  }
-}
-
-extension HeartRateSampleEntityToDomain on HeartRateSampleData {
-  HeartRateSample toDomainModel() {
-    return HeartRateSample(
-      sessionId: sessionId,
-      timestamp: timestamp,
-      heartRate: heartRate,
-      rrIntervals: rrIntervals != null && rrIntervals!.isNotEmpty
-          ? List<int>.from(jsonDecode(rrIntervals!))
-          : [],
-      contactDetected: contactDetected,
-      quality: quality,
-      source: HeartRateSource.values.firstWhere(
-        (s) => s.name == source,
-        orElse: () => HeartRateSource.ecg,
-      ),
-    );
-  }
-}
-
-extension HrvSampleEntityToDomain on HrvSampleData {
-  HrvSample toDomainModel() {
-    return HrvSample(
-      sessionId: sessionId,
-      timestamp: timestamp,
-      rrIntervals: List<int>.from(jsonDecode(rrIntervals)),
-      windowSeconds: windowSeconds,
-      rmssd: rmssd,
-      sdnn: sdnn,
-      pnn50: pnn50,
-      meanRR: meanRR,
-      heartRate: heartRate,
-      stressIndex: stressIndex,
-    );
-  }
-}
-
-extension HrvSampleMapper on HrvSample {
-  HrvSamplesCompanion toCompanion() {
-    return HrvSamplesCompanion.insert(
-      sessionId: sessionId,
-      timestamp: timestamp,
-      rrIntervals: jsonEncode(rrIntervals),
-      windowSeconds: windowSeconds,
-      rmssd: Value(rmssd),
-      sdnn: Value(sdnn),
-      pnn50: Value(pnn50),
-      meanRR: Value(meanRR),
-      heartRate: Value(heartRate),
-      stressIndex: Value(stressIndex),
-    );
   }
 }

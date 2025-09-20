@@ -1,12 +1,14 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import '../../domain/models/models.dart';
-import '../datasources/local/app_database.dart';
+import 'package:drift/drift.dart' show Value;
+import '../datasources/local/app_database.dart' as db;
 
 /// Extension to convert database entities to domain models
 extension PolarDeviceMapper on PolarDevice {
   /// Convert domain model to database companion
-  PolarDevicesCompanion toCompanion() {
-    return PolarDevicesCompanion.insert(
+  db.PolarDevicesCompanion toCompanion() {
+    return db.PolarDevicesCompanion.insert(
       deviceId: deviceId,
       name: name,
       firmwareVersion: Value(firmwareVersion),
@@ -19,8 +21,8 @@ extension PolarDeviceMapper on PolarDevice {
   }
 
   /// Update database companion with domain model
-  PolarDevicesCompanion toUpdateCompanion() {
-    return PolarDevicesCompanion(
+  db.PolarDevicesCompanion toUpdateCompanion() {
+    return db.PolarDevicesCompanion(
       deviceId: Value(deviceId),
       name: Value(name),
       firmwareVersion: Value(firmwareVersion),
@@ -34,32 +36,32 @@ extension PolarDeviceMapper on PolarDevice {
   }
 }
 
-extension PolarDeviceEntityMapper on PolarDevice {
+extension PolarDeviceEntityMapper on db.PolarDevice {
   /// Convert database entity to domain model
-  static PolarDevice fromEntity(PolarDevice entity) {
+  PolarDevice toDomainModel() {
     return PolarDevice(
-      deviceId: entity.deviceId,
-      name: entity.name,
-      firmwareVersion: entity.firmwareVersion,
-      batteryLevel: entity.batteryLevel,
+      deviceId: deviceId,
+      name: name,
+      firmwareVersion: firmwareVersion,
+      batteryLevel: batteryLevel,
       connectionStatus: DeviceConnectionStatus.values.firstWhere(
-        (status) => status.name == entity.connectionStatus,
+        (status) => status.name == connectionStatus,
         orElse: () => DeviceConnectionStatus.disconnected,
       ),
-      signalQuality: entity.signalQuality,
+      signalQuality: signalQuality,
       electrodeStatus: ElectrodeStatus.values.firstWhere(
-        (status) => status.name == entity.electrodeStatus,
+        (status) => status.name == electrodeStatus,
         orElse: () => ElectrodeStatus.unknown,
       ),
-      lastSeen: entity.lastSeen,
+      lastSeen: lastSeen,
     );
   }
 }
 
 extension MeasurementSessionMapper on MeasurementSession {
   /// Convert domain model to database companion
-  MeasurementSessionsCompanion toCompanion() {
-    return MeasurementSessionsCompanion.insert(
+  db.MeasurementSessionsCompanion toCompanion() {
+    return db.MeasurementSessionsCompanion.insert(
       sessionId: sessionId,
       deviceId: deviceId,
       startTime: startTime,
@@ -72,8 +74,8 @@ extension MeasurementSessionMapper on MeasurementSession {
   }
 
   /// Update database companion with domain model
-  MeasurementSessionsCompanion toUpdateCompanion() {
-    return MeasurementSessionsCompanion(
+  db.MeasurementSessionsCompanion toUpdateCompanion() {
+    return db.MeasurementSessionsCompanion(
       sessionId: Value(sessionId),
       deviceId: Value(deviceId),
       startTime: Value(startTime),
@@ -87,7 +89,7 @@ extension MeasurementSessionMapper on MeasurementSession {
   }
 }
 
-extension MeasurementSessionEntityMapper on MeasurementSessionData {
+extension MeasurementSessionEntityMapper on db.MeasurementSession {
   /// Convert database entity to domain model
   MeasurementSession toDomainModel() {
     return MeasurementSession(
@@ -111,8 +113,8 @@ extension MeasurementSessionEntityMapper on MeasurementSessionData {
 
 extension EcgSampleMapper on EcgSample {
   /// Convert domain model to database companion
-  EcgSamplesCompanion toCompanion() {
-    return EcgSamplesCompanion.insert(
+  db.EcgSamplesCompanion toCompanion() {
+    return db.EcgSamplesCompanion.insert(
       sessionId: sessionId,
       timestamp: timestamp,
       voltage: voltage,
@@ -124,29 +126,31 @@ extension EcgSampleMapper on EcgSample {
   }
 }
 
-extension EcgSampleEntityMapper on EcgSample {
+extension EcgSampleEntityMapper on db.EcgSample {
   /// Convert database entity to domain model
-  static EcgSample fromEntity(EcgSample entity) {
+  EcgSample toDomainModel() {
     return EcgSample(
-      sessionId: entity.sessionId,
-      timestamp: entity.timestamp,
-      voltage: entity.voltage,
-      sequenceNumber: entity.sequenceNumber,
-      quality: entity.quality,
-      isRPeak: entity.isRPeak,
-      leadId: entity.leadId,
+      sessionId: sessionId,
+      timestamp: timestamp,
+      voltage: voltage,
+      sequenceNumber: sequenceNumber,
+      quality: quality,
+      isRPeak: isRPeak,
+      leadId: leadId,
     );
   }
 }
 
 extension HeartRateSampleMapper on HeartRateSample {
   /// Convert domain model to database companion
-  HeartRateSamplesCompanion toCompanion() {
-    return HeartRateSamplesCompanion.insert(
+  db.HeartRateSamplesCompanion toCompanion() {
+    return db.HeartRateSamplesCompanion.insert(
       sessionId: sessionId,
       timestamp: timestamp,
       heartRate: heartRate,
-      rrIntervals: Value(rrIntervals.isNotEmpty ? jsonEncode(rrIntervals) : null),
+      rrIntervals: Value(
+        rrIntervals.isNotEmpty ? jsonEncode(rrIntervals) : null,
+      ),
       contactDetected: contactDetected,
       quality: Value(quality),
       source: source.name,
@@ -154,15 +158,15 @@ extension HeartRateSampleMapper on HeartRateSample {
   }
 }
 
-extension HeartRateSampleEntityMapper on HeartRateSampleData {
+extension HeartRateSampleEntityMapper on db.HeartRateSample {
   /// Convert database entity to domain model
   HeartRateSample toDomainModel() {
     return HeartRateSample(
       sessionId: sessionId,
       timestamp: timestamp,
       heartRate: heartRate,
-      rrIntervals: rrIntervals != null 
-          ? List<int>.from(jsonDecode(rrIntervals!)) 
+      rrIntervals: rrIntervals != null
+          ? List<int>.from(jsonDecode(rrIntervals!))
           : [],
       contactDetected: contactDetected,
       quality: quality,
@@ -176,8 +180,8 @@ extension HeartRateSampleEntityMapper on HeartRateSampleData {
 
 extension AnalysisResultMapper on AnalysisResult {
   /// Convert domain model to database companion
-  AnalysisResultsCompanion toCompanion() {
-    return AnalysisResultsCompanion.insert(
+  db.AnalysisResultsCompanion toCompanion() {
+    return db.AnalysisResultsCompanion.insert(
       analysisId: analysisId,
       sessionId: sessionId,
       analysisType: analysisType.name,
@@ -192,8 +196,8 @@ extension AnalysisResultMapper on AnalysisResult {
   }
 
   /// Update database companion with domain model
-  AnalysisResultsCompanion toUpdateCompanion() {
-    return AnalysisResultsCompanion(
+  db.AnalysisResultsCompanion toUpdateCompanion() {
+    return db.AnalysisResultsCompanion(
       analysisId: Value(analysisId),
       sessionId: Value(sessionId),
       analysisType: Value(analysisType.name),
@@ -209,7 +213,7 @@ extension AnalysisResultMapper on AnalysisResult {
   }
 }
 
-extension AnalysisResultEntityMapper on AnalysisResultData {
+extension AnalysisResultEntityMapper on db.AnalysisResult {
   /// Convert database entity to domain model
   AnalysisResult toDomainModel() {
     return AnalysisResult(
@@ -229,6 +233,84 @@ extension AnalysisResultEntityMapper on AnalysisResultData {
       confidence: confidence,
       errorMessage: errorMessage,
       processingTimeMs: processingTimeMs,
+    );
+  }
+}
+
+// Helper methods for decompressing ECG batch data
+List<double> _decompressVoltageData(Uint8List data) {
+  final buffer = ByteData.sublistView(data);
+  final voltages = <double>[];
+  for (int i = 0; i < data.length; i += 2) {
+    voltages.add(buffer.getInt16(i) / 1000.0);
+  }
+  return voltages;
+}
+
+List<int> _decompressRPeakIndices(Uint8List? data) {
+  if (data == null || data.isEmpty) return [];
+  final buffer = ByteData.sublistView(data);
+  final indices = <int>[];
+  for (int i = 0; i < data.length; i += 4) {
+    indices.add(buffer.getInt32(i));
+  }
+  return indices;
+}
+
+extension EcgSampleBatchEntityMapper on db.EcgSampleBatch {
+  /// Convert database entity to domain batch model
+  EcgSampleBatch toDomainBatch() {
+    final voltages = _decompressVoltageData(voltagesData);
+    final rPeak = _decompressRPeakIndices(rPeakIndices);
+
+    final quality = qualityMetrics != null
+        ? BatchQuality.fromJson(jsonDecode(qualityMetrics!))
+        : null;
+
+    return EcgSampleBatch(
+      sessionId: sessionId,
+      startTimestamp: startTimestamp,
+      endTimestamp: endTimestamp,
+      samplingRate: samplingRate,
+      voltages: voltages,
+      rPeakIndices: rPeak,
+      batchNumber: batchNumber,
+      quality: quality,
+    );
+  }
+}
+
+extension HrvSampleMapper on HrvSample {
+  db.HrvSamplesCompanion toCompanion() {
+    return db.HrvSamplesCompanion.insert(
+      sessionId: sessionId,
+      timestamp: timestamp,
+      rrIntervals: jsonEncode(rrIntervals),
+      windowSeconds: windowSeconds,
+      rmssd: Value(rmssd),
+      sdnn: Value(sdnn),
+      pnn50: Value(pnn50),
+      meanRR: Value(meanRR),
+      heartRate: Value(heartRate),
+      stressIndex: Value(stressIndex),
+    );
+  }
+}
+
+extension HrvSampleEntityMapper on db.HrvSample {
+  /// Convert database entity to domain model
+  HrvSample toDomainModel() {
+    return HrvSample(
+      sessionId: sessionId,
+      timestamp: timestamp,
+      rrIntervals: List<int>.from(jsonDecode(rrIntervals)),
+      windowSeconds: windowSeconds,
+      rmssd: rmssd,
+      sdnn: sdnn,
+      pnn50: pnn50,
+      meanRR: meanRR,
+      heartRate: heartRate,
+      stressIndex: stressIndex,
     );
   }
 }

@@ -1,12 +1,12 @@
 import 'package:drift/drift.dart';
 import '../../domain/models/polar_device.dart';
 import '../../domain/repositories/device_repository.dart';
-import '../datasources/local/app_database.dart';
+import '../datasources/local/app_database.dart' as db;
 import '../models/data_mappers.dart';
 
 /// Concrete implementation of DeviceRepository using Drift database
 class DriftDeviceRepository implements DeviceRepository {
-  final AppDatabase _database;
+  final db.AppDatabase _database;
 
   const DriftDeviceRepository(this._database);
 
@@ -18,25 +18,25 @@ class DriftDeviceRepository implements DeviceRepository {
 
   @override
   Future<PolarDevice?> getDevice(String deviceId) async {
-    final entity = await (_database.select(_database.polarDevices)
-          ..where((device) => device.deviceId.equals(deviceId)))
-        .getSingleOrNull();
-    
+    final entity = await (_database.select(
+      _database.polarDevices,
+    )..where((device) => device.deviceId.equals(deviceId))).getSingleOrNull();
+
     return entity?.toDomainModel();
   }
 
   @override
   Future<void> saveDevice(PolarDevice device) async {
-    await _database.into(_database.polarDevices).insertOnConflictUpdate(
-      device.toCompanion(),
-    );
+    await _database
+        .into(_database.polarDevices)
+        .insertOnConflictUpdate(device.toCompanion());
   }
 
   @override
   Future<void> deleteDevice(String deviceId) async {
-    await (_database.delete(_database.polarDevices)
-          ..where((device) => device.deviceId.equals(deviceId)))
-        .go();
+    await (_database.delete(
+      _database.polarDevices,
+    )..where((device) => device.deviceId.equals(deviceId))).go();
   }
 
   @override
@@ -44,23 +44,27 @@ class DriftDeviceRepository implements DeviceRepository {
     String deviceId,
     DeviceConnectionStatus status,
   ) async {
-    await (_database.update(_database.polarDevices)
-          ..where((device) => device.deviceId.equals(deviceId)))
-        .write(PolarDevicesCompanion(
-      connectionStatus: Value(status.name),
-      lastSeen: Value(DateTime.now()),
-      updatedAt: Value(DateTime.now()),
-    ));
+    await (_database.update(
+      _database.polarDevices,
+    )..where((device) => device.deviceId.equals(deviceId))).write(
+      db.PolarDevicesCompanion(
+        connectionStatus: Value(status.name),
+        lastSeen: Value(DateTime.now()),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   @override
   Future<void> updateSignalQuality(String deviceId, int quality) async {
-    await (_database.update(_database.polarDevices)
-          ..where((device) => device.deviceId.equals(deviceId)))
-        .write(PolarDevicesCompanion(
-      signalQuality: Value(quality),
-      updatedAt: Value(DateTime.now()),
-    ));
+    await (_database.update(
+      _database.polarDevices,
+    )..where((device) => device.deviceId.equals(deviceId))).write(
+      db.PolarDevicesCompanion(
+        signalQuality: Value(quality),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   @override
@@ -68,33 +72,15 @@ class DriftDeviceRepository implements DeviceRepository {
     String deviceId,
     ElectrodeStatus status,
   ) async {
-    await (_database.update(_database.polarDevices)
-          ..where((device) => device.deviceId.equals(deviceId)))
-        .write(PolarDevicesCompanion(
-      electrodeStatus: Value(status.name),
-      updatedAt: Value(DateTime.now()),
-    ));
-  }
-}
-
-/// Extension to convert database entity to domain model
-extension PolarDeviceEntityToDomain on PolarDevice {
-  PolarDevice toDomainModel() {
-    return PolarDevice(
-      deviceId: deviceId,
-      name: name,
-      firmwareVersion: firmwareVersion,
-      batteryLevel: batteryLevel,
-      connectionStatus: DeviceConnectionStatus.values.firstWhere(
-        (status) => status.name == connectionStatus,
-        orElse: () => DeviceConnectionStatus.disconnected,
+    await (_database.update(
+      _database.polarDevices,
+    )..where((device) => device.deviceId.equals(deviceId))).write(
+      db.PolarDevicesCompanion(
+        electrodeStatus: Value(status.name),
+        updatedAt: Value(DateTime.now()),
       ),
-      signalQuality: signalQuality,
-      electrodeStatus: ElectrodeStatus.values.firstWhere(
-        (status) => status.name == electrodeStatus,
-        orElse: () => ElectrodeStatus.unknown,
-      ),
-      lastSeen: lastSeen,
     );
   }
 }
+
+// Mapping extension for `db.PolarDevice` moved to `data_mappers.dart`.
